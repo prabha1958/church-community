@@ -122,4 +122,16 @@ class MemberController extends Controller
             'data' => $member,
         ]);
     }
+
+    public function deactivate(Request $request, Member $member)
+    {
+        $member->update([
+            'status_flag' => 0,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Member deactivated successfully.',
+        ]);
+    }
 }

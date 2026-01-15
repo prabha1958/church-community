@@ -5,14 +5,20 @@ namespace App\Mail;
 use Illuminate\Mail\Mailable;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Payment;
+use App\Models\Member;
 
 class SubscriptionReceiptMail extends Mailable
 {
     public Payment $payment;
+    public $fy;
 
-    public function __construct(Payment $payment)
+
+
+
+    public function __construct(Payment $payment, $fy)
     {
         $this->payment = $payment;
+        $this->fy = $fy;
     }
 
     public function build()
@@ -27,21 +33,20 @@ class SubscriptionReceiptMail extends Mailable
             'subscription' => $payment->subscription,
             'months' => $months,
             'amount' => $payment->amount,
-            'payment_mode' => $payment->payment_mode,
             'razorpay_order_id' => $payment->razorpay_order_id,
             'razorpay_payment_id' => $payment->razorpay_payment_id,
             'financial_year' => $payment->subscription->financial_year,
         ]);
 
         return $this->subject('Subscription Payment Receipt')
-            ->view('emails.subscription-receipt')   // ✅ EMAIL VIEW
+            ->view('emails.subscription-receipt')
             ->with([
                 'member' => $payment->member,
                 'amount' => $payment->amount,
                 'months' => $months,
-                'financial_year' => $payment->subscription->financial_year,
-                'payment_mode' => $payment->payment_mode,
-                'reference_no' => $payment->reference_no,
+                'receipt_no' => $payment->id,
+                'payment' => $payment,
+                'fy' => $this->fy,
             ])
             ->attachData(
                 $pdf->output(),

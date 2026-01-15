@@ -158,11 +158,12 @@ class SubscriptionController extends Controller
 
         /** 📧 EMAIL AFTER COMMIT */
         try {
+            $fy = Subscription::financialYearForDate();
             $payment->load('member', 'subscription');
 
             if ($payment->member && $payment->member->email) {
                 Mail::to($payment->member->email)
-                    ->send(new SubscriptionReceiptMail($payment));
+                    ->send(new SubscriptionReceiptMail($payment, $fy));
             }
         } catch (\Throwable $e) {
             Log::error('Receipt email failed', [
@@ -352,7 +353,7 @@ class SubscriptionController extends Controller
 
         // 📧 email receipt (same mail class)
         $payment = Payment::latest()->first();
-        Mail::to($member->email)->send(new SubscriptionReceiptMail($payment));
+        Mail::to($member->email)->send(new SubscriptionReceiptMail($payment, $fy));
 
         return response()->json([
             'success' => true,

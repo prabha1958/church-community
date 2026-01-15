@@ -22,7 +22,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->name('admin.')->g
     Route::get('members/{member}', [AdminMemberController::class, 'show'])->name('members.show');
     Route::put('members/{member}', [AdminMemberController::class, 'update'])->name('members.update');
     Route::patch('members/{member}', [AdminMemberController::class, 'update']);
-    Route::delete('members/{member}', [AdminMemberController::class, 'destroy'])->name('members.destroy');
+    Route::delete('members/{member}/deactivate', [AdminMemberController::class, 'deactivate'])->name('members.destroy');
     Route::post('members', [AdminMemberController::class, 'store'])->name('members.store');
 });
 
@@ -31,6 +31,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->name('admin.')->g
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::post('subscriptions/{member}/pay', [AdminSubscriptionController::class, 'payOnBehalf']);
+    Route::post('subscriptions/{member}/pay-offline', [AdminSubscriptionController::class, 'payOffline']);
     Route::post('subscriptions/{member}/create', [AdminSubscriptionController::class, 'createSubscription']);
     Route::get('subscriptions/{member}/due', [AdminSubscriptionController::class, 'due']);
+    Route::get('subscriptions', [AdminSubscriptionController::class, 'index']);
+    Route::get('subscriptions/{member}', [AdminSubscriptionController::class, 'show']);
+    Route::post('subscriptions/verify-payment', [AdminSubscriptionController::class, 'verifyPayment']);
 });
