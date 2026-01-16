@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
+use App\Http\Controllers\Admin\AllianceController as AdminAllianceController;
 
 //authentication
 
@@ -24,6 +25,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->name('admin.')->g
     Route::patch('members/{member}', [AdminMemberController::class, 'update']);
     Route::delete('members/{member}/deactivate', [AdminMemberController::class, 'deactivate'])->name('members.destroy');
     Route::post('members', [AdminMemberController::class, 'store'])->name('members.store');
+    Route::patch('members/{member}/email', [AdminMemberController::class, 'updateEmail'])->name('members.updateEmail');
+    Route::patch('members/{member}/mobile', [AdminMemberController::class, 'updateMobile'])->name('members.updateMobile');
 });
 
 
@@ -37,4 +40,13 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('subscriptions', [AdminSubscriptionController::class, 'index']);
     Route::get('subscriptions/{member}', [AdminSubscriptionController::class, 'show']);
     Route::post('subscriptions/verify-payment', [AdminSubscriptionController::class, 'verifyPayment']);
+});
+
+//alliance routes
+
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::post('alliances', [AdminAllianceController::class, 'store']);
+    Route::get('alliances', [AdminAllianceController::class, 'index']);
+    Route::get('alliances/{alliance}', [AdminAllianceController::class, 'show']);
+    Route::patch('alliances/{alliance}', [AdminAllianceController::class, 'update']);
 });

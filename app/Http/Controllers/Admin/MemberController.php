@@ -10,6 +10,8 @@ use App\Models\Member;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\UpdateMemberRequest;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 class MemberController extends Controller
 
@@ -98,6 +100,8 @@ class MemberController extends Controller
 
     public function update(UpdateMemberRequest $request, Member $member)
     {
+
+        Log::info('FILES', $request->allFiles());
         $data = $request->validated();
 
 
@@ -108,6 +112,14 @@ class MemberController extends Controller
                 Storage::disk('public')->delete($member->profile_photo);
             }
             $data['profile_photo'] = $request->file('profile_photo')->store('members/photos', 'public');
+        }
+
+        if ($request->hasFile('couple_pic')) {
+            // delete old photo if present
+            if ($member->couple_pic && Storage::disk('public')->exists($member->couple_pic)) {
+                Storage::disk('public')->delete($member->couple_pic);
+            }
+            $data['couple_pic'] = $request->file('couple_pic')->store('members/photos', 'public');
         }
 
         if (isset($data['status_flag']) && ! $request->user()->isAdmin()) {
@@ -132,6 +144,50 @@ class MemberController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Member deactivated successfully.',
+        ]);
+    }
+
+    public function updateEmail(Request $request, Member $member)
+    {
+        $data = $request->validate([
+            'email' => [
+                'sometimes',
+                'email',
+                Rule::unique('members', 'email')->ignore($member->id),
+            ],
+            'mobile_number' => [
+                'sometimes',
+                'string',
+                Rule::unique('members', 'mobile_number')->ignore($member->id),
+            ],
+        ]);
+
+        $member->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Email details updated',
+            'data' => $member->only(['email']),
+        ]);
+    }
+
+    public function updateMobile(Request $request, Member $member)
+    {
+        $data = $request->validate([
+
+            'mobile_number' => [
+                'sometimes',
+                'string',
+                Rule::unique('members', 'mobile_number')->ignore($member->id),
+            ],
+        ]);
+
+        $member->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mobile details updated',
+            'data' => $member->only(['mobile_number']),
         ]);
     }
 }
