@@ -81,7 +81,6 @@ class AllianceController extends Controller
         ]);
     }
 
-
     public function show(Alliance $alliance)
     {
         $alliance->load('member');
