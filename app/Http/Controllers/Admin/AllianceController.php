@@ -72,6 +72,7 @@ class AllianceController extends Controller
                         ? $a->member->first_name . ' ' . $a->member->last_name
                         : null,
                     'is_published'  => (bool) $a->is_published,
+                    'payment_id'    => $a->payment_id,
                 ];
             });
 
