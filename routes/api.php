@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\AllianceController as AdminAllianceController;
 use App\Http\Controllers\AlliancePaymentController;
+use App\Http\Controllers\Admin\AlliancePaymentController as AdminAlliancePaymentController;
 
 //authentication
 
@@ -50,12 +51,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('alliances', [AdminAllianceController::class, 'index']);
     Route::get('alliances/{alliance}', [AdminAllianceController::class, 'show']);
     Route::patch('alliances/{alliance}', [AdminAllianceController::class, 'update']);
-    Route::post('alliances/{alliance}/payments/create-order', [AlliancePaymentController::class, 'createOrder']);
-    Route::post('alliances/{alliance}/payments/verify', [AlliancePaymentController::class, 'verify']);
-});
-
-
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('alliances/{alliance}/payments/create-order', [AlliancePaymentController::class, 'createOrder']);
-    Route::post('alliances/{alliance}/payments/verify', [AlliancePaymentController::class, 'verify']);
+    Route::post('alliances/{alliance}/payments/create-order', [AdminAlliancePaymentController::class, 'createOrder']);
+    Route::post('alliances/{alliance}/payments/verify', [AdminAlliancePaymentController::class, 'verify']);
+    Route::post('alliances/{alliance}/payments/offline', [AdminAlliancePaymentController::class, 'payOffline']);
 });

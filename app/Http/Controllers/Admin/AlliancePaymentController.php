@@ -1,16 +1,19 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\Alliance;
 use App\Models\AlliancePayment;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\SignatureVerificationError;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Mail\AllianceReceiptMail;
+use Illuminate\Support\Facades\Mail;
 
 class AlliancePaymentController extends Controller
 {
@@ -84,6 +87,8 @@ class AlliancePaymentController extends Controller
                 'status' => 'created',
                 'raw' => json_encode($razorpayOrder),
             ]);
+
+
 
             return response()->json([
                 'success' => true,
@@ -163,6 +168,20 @@ class AlliancePaymentController extends Controller
                 ]);
             }
 
+            try {
+                $payment->load('member', 'alliance');
+
+                if ($payment->member && $payment->member->email) {
+                    Mail::to($payment->member->email)
+                        ->send(new AllianceReceiptMail($payment));
+                }
+            } catch (\Throwable $e) {
+                Log::error('Alliance receipt email failed', [
+                    'payment_id' => $payment->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             // 🔑 UPDATE ALLIANCE TABLE
             $alliance->applyPayment($payment);
         });
@@ -170,6 +189,67 @@ class AlliancePaymentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Payment verified and alliance updated successfully',
+        ]);
+    }
+
+    public function payOffline(Request $request, Alliance $alliance)
+    {
+        $user = $request->user();
+
+        if ($user->id !== $alliance->member_id && ($user->role ?? '') !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $data = $request->validate([
+            'amount'        => 'required|numeric|min:' . $this->minimumRupees,
+            'payment_mode'  => 'required|in:cash,upi',
+            'reference_no'  => 'required|string|max:255',
+        ]);
+
+        $payment = DB::transaction(function () use ($alliance, $data) {
+
+            $payment = AlliancePayment::create([
+                'alliance_id' => $alliance->id,
+                'member_id'   => $alliance->member_id,
+                'payment_gateway' => 'offline',
+                'amount' => $data['amount'],
+                'currency' => 'INR',
+                'status' => 'paid',
+                'paid_at' => now(),
+                'raw' => [
+                    'payment_mode' => $data['payment_mode'],
+                    'reference_no' => $data['reference_no'],
+                ],
+            ]);
+
+            // 🔑 UPDATE ALLIANCE TABLE
+            $alliance->update([
+                'amount'       => $payment->amount,
+                'payment_id'   => $data['reference_no'],
+                'payment_date' => now(),
+            ]);
+
+
+            return $payment;
+        });
+
+        // 📧 EMAIL RECEIPT
+        try {
+            $payment->load('member', 'alliance');
+            Mail::to($payment->member->email)
+                ->send(new AllianceReceiptMail($payment));
+        } catch (\Throwable $e) {
+            Log::error('Alliance offline receipt email failed', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $alliance->applyPayment($payment);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Offline payment recorded and receipt emailed',
         ]);
     }
 }

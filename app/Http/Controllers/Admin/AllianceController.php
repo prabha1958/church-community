@@ -73,6 +73,7 @@ class AllianceController extends Controller
                         : null,
                     'is_published'  => (bool) $a->is_published,
                     'payment_id'    => $a->payment_id,
+                    'amount'        => $a->amount,
                 ];
             });
 

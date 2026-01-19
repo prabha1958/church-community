@@ -34,6 +34,7 @@ class OtpAuthController extends Controller
         // Determine channel: email or phone
         $isEmail = filter_var($contactRaw, FILTER_VALIDATE_EMAIL);
         $isPhone = preg_match('/^[0-9+\-\s()]+$/', $contactRaw); // loose phone check
+        Log::info($isPhone);
 
         if (! $isEmail && ! $isPhone) {
             return response()->json([
@@ -41,6 +42,7 @@ class OtpAuthController extends Controller
                 'message' => 'Please provide a valid email address or mobile number.'
             ], 422);
         }
+
 
         // Normalize contact for storage/lookup
         if ($isEmail) {
@@ -51,7 +53,7 @@ class OtpAuthController extends Controller
 
             // If it's 10 digits (likely Indian local), prefix +91
             if (preg_match('/^[0-9]{10}$/', $digits)) {
-                $digits = '+91' . $digits;
+                $digits = '+61' . $digits;
             }
 
             // If it starts with digits but missing plus, add plus
@@ -62,11 +64,13 @@ class OtpAuthController extends Controller
             $contact = $digits;
         }
 
+        Log::info($contact);
+
         // Find member by email or mobile_number
         if ($isEmail) {
             $member = Member::where('email', $contact)->first();
         } else {
-            $member = Member::where('mobile_number', $contact)
+            $member = Member::where('mobile_number', $contactRaw)
                 ->orWhere('mobile_number', preg_replace('/^\+?/', '', $contact)) // try without plus
                 ->first();
         }
@@ -118,6 +122,37 @@ class OtpAuthController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to send email. Please try again later.' . $e
+                ], 500);
+            }
+        }
+
+        if ($isPhone) {
+            try {
+                /** @var \App\Services\SmsSender $smsSender */
+                $smsSender = app()->make(\App\Services\SmsSender::class);
+
+                $sent = $smsSender->send($contact, $smsMessage);
+
+
+                if (! $sent) {
+                    // remove OTP record on send failure
+                    $otp->delete();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to send SMS. Please try again later.'
+                    ], 500);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'OTP sent to the registered mobile number.'
+                ]);
+            } catch (\Throwable $e) {
+                $otp->delete();
+                Log::error('SMS send failed: ' . $e->getMessage(), ['contact' => $contact, 'member_id' => $member->id]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send SMS. Please try again later.'
                 ], 500);
             }
         }
