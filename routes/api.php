@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionContro
 use App\Http\Controllers\Admin\AllianceController as AdminAllianceController;
 use App\Http\Controllers\AlliancePaymentController;
 use App\Http\Controllers\Admin\AlliancePaymentController as AdminAlliancePaymentController;
+use App\Http\Controllers\Admin\MessageController as AdminMessageController;
 
 //authentication
 
@@ -54,4 +55,13 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('alliances/{alliance}/payments/create-order', [AdminAlliancePaymentController::class, 'createOrder']);
     Route::post('alliances/{alliance}/payments/verify', [AdminAlliancePaymentController::class, 'verify']);
     Route::post('alliances/{alliance}/payments/offline', [AdminAlliancePaymentController::class, 'payOffline']);
+});
+
+// messages
+
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::post('/messages', [AdminMessageController::class, 'store']);
+    Route::post('/messages/{message}/send', [AdminMessageController::class, 'publish']);
+    Route::get('/messages', [AdminMessageController::class, 'index']);
+    Route::put('/messages/{message}/update', [AdminMessageController::class, 'update']);
 });

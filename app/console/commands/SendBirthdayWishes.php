@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use App\Models\BirthdayGreeting;
+use App\Models\Message;
 
 
 class SendBirthdayWishes extends Command
@@ -30,6 +32,8 @@ class SendBirthdayWishes extends Command
         $today = Carbon::today();
         $month = $today->month;
         $day = $today->day;
+        $year = $today->year;
+
 
         $this->info("Looking up members with birthday on {$today->toDateString()}");
 
@@ -46,54 +50,89 @@ class SendBirthdayWishes extends Command
             return 0;
         }
 
+
+
+
+
         $sendWhatsapp = $this->option('whatsapp');
         $dry = $this->option('dry');
         $templateOption = $this->option('template');
 
         foreach ($members as $member) {
+
+            // 🔒 DUPLICATE CHECK (correct place)
+            $alreadySent = BirthdayGreeting::where('member_id', $member->id)
+                ->where('greeted_year', $year)
+                ->exists();
+
+            if ($alreadySent) {
+                $this->warn("Birthday already sent to member {$member->id} for {$year}, skipping.");
+                continue;
+            }
+
             $toEmail = $member->email;
             $toMobile = $member->mobile_number ?? $member->mobile ?? null;
 
-            $this->line("Processing member ID {$member->id} — email: {$toEmail} mobile: {$toMobile}");
+            $emailSent = false;
+            $whatsAppSent = false;
 
-            // 1) Email (always attempt if email present)
-            if ($toEmail) {
-                if ($dry) {
-                    $this->info("DRY: would send email to {$toEmail}");
-                } else {
-                    try {
-                        Mail::to($toEmail)->send(new BirthdayWishMail($member));
-                        $this->info("Email sent to {$toEmail}");
-                    } catch (\Throwable $e) {
-                        $this->error("Failed to send email to {$toEmail}: " . $e->getMessage());
-                        Log::error('Birthday email failed', ['member_id' => $member->id, 'error' => $e->getMessage()]);
-                    }
+            $this->line("Processing member ID {$member->id}");
+
+            // 📧 EMAIL
+            if ($toEmail && ! $dry) {
+                try {
+                    Mail::to($toEmail)->send(new BirthdayWishMail($member));
+                    $emailSent = true;
+                    $this->info("Email sent to {$toEmail}");
+                } catch (\Throwable $e) {
+                    Log::error('Birthday email failed', [
+                        'member_id' => $member->id,
+                        'error' => $e->getMessage()
+                    ]);
                 }
-            } else {
-                $this->warn("No email for member {$member->id}, skipping email.");
             }
 
-            // 2) WhatsApp (if requested)
-            if ($sendWhatsapp) {
-                if (! $toMobile) {
-                    $this->warn("No mobile for member {$member->id}, skipping WhatsApp.");
-                } else {
-                    $message = $this->buildWhatsappText($member, $templateOption);
-
-                    if ($dry) {
-                        $this->info("DRY: would send WhatsApp to {$toMobile}: {$message}");
-                    } else {
-                        try {
-                            $result = $this->sendWhatsAppViaTwilio($toMobile, $message);
-                            $this->info("WhatsApp sent to {$toMobile}, sid: " . ($result['sid'] ?? 'n/a'));
-                        } catch (\Throwable $e) {
-                            $this->error("Failed to send WhatsApp to {$toMobile}: " . $e->getMessage());
-                            Log::error('Birthday WhatsApp failed', ['member_id' => $member->id, 'error' => $e->getMessage()]);
-                        }
-                    }
+            // 📱 WHATSAPP
+            if ($sendWhatsapp && $toMobile && ! $dry) {
+                try {
+                    $text = $this->buildWhatsappText($member, $templateOption);
+                    $this->sendWhatsAppViaTwilio($toMobile, $text);
+                    $whatsAppSent = true;
+                    $this->info("WhatsApp sent to {$toMobile}");
+                } catch (\Throwable $e) {
+                    Log::error('Birthday WhatsApp failed', [
+                        'member_id' => $member->id,
+                        'error' => $e->getMessage()
+                    ]);
                 }
+            }
+
+            // 🧾 DB RECORDS — ALWAYS CREATED ONCE
+            try {
+                BirthdayGreeting::create([
+                    'member_id' => $member->id,
+                    'greeted_on' => $today->toDateString(),
+                    'greeted_year' => $year,
+                    'email_sent' => $emailSent,
+                    'whatsapp_sent' => $whatsAppSent,
+                ]);
+
+                Message::create([
+                    'member_id' => $member->id,
+                    'title' => 'Happy Birthday 🎉',
+                    'body' => $this->buildWhatsappText($member, $templateOption),
+                    'message_type' => 'birthday',
+                    'is_published' => 1,
+                    'published_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to persist birthday greeting', [
+                    'member_id' => $member->id,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
+
 
         $this->info('Done.');
         return 0;

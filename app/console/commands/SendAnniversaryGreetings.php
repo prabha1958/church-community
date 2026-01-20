@@ -8,6 +8,9 @@ use App\Services\WhatsAppSender;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Mail\AnniversaryWishMail;
+use App\Models\Message;
+use Illuminate\Support\Facades\Mail;
 
 class SendAnniversaryGreetings extends Command
 {
@@ -55,11 +58,7 @@ class SendAnniversaryGreetings extends Command
         $spouse = $member->spouse_name ?: 'your beloved spouse';
         $firstName = $member->first_name ?: $member->family_name ?: 'Friend';
         $phone = $member->mobile_number;
-
-        if (empty($phone)) {
-            Log::warning("Skipping member ID {$member->id} - no phone number");
-            return;
-        }
+        $email = $member->email;
 
         $exists = DB::table('anniversary_greetings')
             ->where('member_id', $member->id)
@@ -67,11 +66,11 @@ class SendAnniversaryGreetings extends Command
             ->exists();
 
         if ($exists) {
-            $this->info("Already sent to {$firstName} ({$phone}). Skipping.");
+            $this->info("Already sent to {$firstName}. Skipping.");
             return;
         }
 
-        $message = <<<MSG
+        $messageText = <<<MSG
 🎉 *Happy Wedding Anniversary, {$firstName}!* 🎉
 
 May God bless your union with {$spouse} with many more years of joy, love, and togetherness.
@@ -79,18 +78,55 @@ May God bless your union with {$spouse} with many more years of joy, love, and t
 — CSI Centenary Wesley Church, Ramkote
 MSG;
 
-        $sent = $this->whatsapp->send($phone, $message);
+        $whatsappSent = false;
+        $emailSent = false;
 
+        // 📱 WhatsApp
+        if ($phone) {
+            try {
+                $whatsappSent = $this->whatsapp->send($phone, $messageText);
+            } catch (\Throwable $e) {
+                Log::error('Anniversary WhatsApp failed', [
+                    'member_id' => $member->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        // 📧 Email
+        if ($email) {
+            try {
+                Mail::to($email)->send(new AnniversaryWishMail($member));
+                $emailSent = true;
+            } catch (\Throwable $e) {
+                Log::error('Anniversary email failed', [
+                    'member_id' => $member->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        // 🧾 Record anniversary_greetings
         DB::table('anniversary_greetings')->insert([
             'member_id' => $member->id,
             'wedding_date' => $member->wedding_date,
             'sent_on' => $date->toDateString(),
-            'channel' => $sent ? 'whatsapp' : 'failed',
-            'message' => $message,
+            'channel' => $whatsappSent ? 'whatsapp' : ($emailSent ? 'email' : 'failed'),
+            'message' => $messageText,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $this->info(($sent ? '✅ Sent' : '❌ Failed') . " to {$firstName} ({$phone})");
+        // 📬 Record in messages table (for app inbox + push)
+        Message::create([
+            'member_id' => $member->id,
+            'title' => 'Happy Wedding Anniversary 🎉',
+            'body' => $messageText,
+            'message_type' => 'anniversary',
+            'is_published' => 1,
+            'published_at' => now(),
+        ]);
+
+        $this->info("✅ Anniversary processed for {$firstName}");
     }
 }
