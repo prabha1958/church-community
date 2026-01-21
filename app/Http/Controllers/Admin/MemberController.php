@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\UpdateMemberRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
+use App\Services\AdminActionLogger;
 
 class MemberController extends Controller
 
@@ -53,6 +54,13 @@ class MemberController extends Controller
                 // \Log::error('Member welcome mail failed: '.$mailEx->getMessage());
             }
         }
+
+        AdminActionLogger::log(
+            action: 'member.create',
+            description: "Member created'{$member->first_name}'",
+            modelType: Member::class,
+            modelId: $member->id
+        );
 
 
         return response()->json([
@@ -128,6 +136,13 @@ class MemberController extends Controller
 
         $member->update($data);
 
+        AdminActionLogger::log(
+            action: 'member.update',
+            description: "Member updated'{$member->first_name}'",
+            modelType: Member::class,
+            modelId: $member->id
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Member updated.',
@@ -140,6 +155,13 @@ class MemberController extends Controller
         $member->update([
             'status_flag' => 0,
         ]);
+
+        AdminActionLogger::log(
+            action: 'member.deactivate',
+            description: "Member deactivated'{$member->first_name}'",
+            modelType: Member::class,
+            modelId: $member->id
+        );
 
         return response()->json([
             'success' => true,
@@ -164,6 +186,13 @@ class MemberController extends Controller
 
         $member->update($data);
 
+        AdminActionLogger::log(
+            action: 'member.emailupate',
+            description: "Member email updated'{$member->first_name}'",
+            modelType: Member::class,
+            modelId: $member->id
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Email details updated',
@@ -183,6 +212,12 @@ class MemberController extends Controller
         ]);
 
         $member->update($data);
+        AdminActionLogger::log(
+            action: 'member.mobile_update',
+            description: "Member mobile updated'{$member->first_name}'",
+            modelType: Member::class,
+            modelId: $member->id
+        );
 
         return response()->json([
             'success' => true,

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\SubscriptionReceiptMail;
 use Illuminate\Support\Facades\Mail;
+use App\Services\AdminActionLogger;
 
 
 class SubscriptionController extends Controller
@@ -99,6 +100,13 @@ class SubscriptionController extends Controller
             'raw' => array_merge($order, ['months' => $months])
         ]);
 
+        AdminActionLogger::log(
+            action: 'Subscription.create',
+            description: "Subscription created'{$payment->razorpay_order_id}'",
+            modelType: Subscription::class,
+            modelId: $payment->subscription_id
+        );
+
         return response()->json(['success' => true, 'order' => $order, 'payment_id' => $payment->id, 'amount' => $amount, 'months' => $months]);
     }
 
@@ -171,6 +179,13 @@ class SubscriptionController extends Controller
                 'error' => $e->getMessage()
             ]);
         }
+
+        AdminActionLogger::log(
+            action: 'Subscription.pay',
+            description: "Subscription paid'{$payment->razorpay_payment_id}'",
+            modelType: Subscription::class,
+            modelId: $payment->subscription_id
+        );
 
         return response()->json([
             'success' => true,
@@ -343,6 +358,8 @@ class SubscriptionController extends Controller
                 'raw'             => ['months' => $data['months']],
             ]);
 
+
+
             foreach ($data['months'] as $m) {
                 $sub->update([
                     "{$m}_payment_id" => $payment->id,
@@ -354,6 +371,13 @@ class SubscriptionController extends Controller
         // 📧 email receipt (same mail class)
         $payment = Payment::latest()->first();
         Mail::to($member->email)->send(new SubscriptionReceiptMail($payment, $fy));
+
+        AdminActionLogger::log(
+            action: 'Subscription.offline_pay',
+            description: "Subscription paid'{$payment->reference_no}'",
+            modelType: Subscription::class,
+            modelId: $payment->subscription_id
+        );
 
         return response()->json([
             'success' => true,

@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\AllianceController as AdminAllianceController;
 use App\Http\Controllers\AlliancePaymentController;
 use App\Http\Controllers\Admin\AlliancePaymentController as AdminAlliancePaymentController;
 use App\Http\Controllers\Admin\MessageController as AdminMessageController;
+use App\Http\Controllers\MessageAuthController;
+
 
 //authentication
 
@@ -65,3 +67,11 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/messages', [AdminMessageController::class, 'index']);
     Route::put('/messages/{message}/update', [AdminMessageController::class, 'update']);
 });
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/messages', [MessageAuthController::class, 'index']);
+});
+
+// msg app login
+
+Route::post('/member/login', [MessageAuthController::class, 'login']);
