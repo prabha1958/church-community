@@ -32,7 +32,9 @@ class MessageAuthController extends Controller
             'member' => [
                 'id' => $member->id,
                 'family_name' => $member->family_name,
-                'first_name' => $member->first_name
+                'first_name' => $member->first_name,
+                'last_name' => $member->last_name,
+                'profile_photo' => $member->profile_photo
             ],
         ]);
     }
@@ -51,5 +53,20 @@ class MessageAuthController extends Controller
             ->paginate(20);
 
         return response()->json($messages);
+    }
+
+    public function show(Message $message, Request $request)
+    {
+        $member = $request->user();
+
+        // Security: ensure member can see this message
+        if (
+            $message->member_id !== null &&
+            $message->member_id !== $member->id
+        ) {
+            abort(403);
+        }
+
+        return response()->json($message);
     }
 }

@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Message;
+use App\Models\DeviceToken;
+use App\Services\ExpoPushService;
+use Illuminate\Support\Str;
+
 
 class MessageController extends Controller
 {
@@ -41,6 +45,18 @@ class MessageController extends Controller
         ]);
 
         // dispatch push job here
+
+        $tokens = DeviceToken::pluck('token')->toArray();
+
+        ExpoPushService::send(
+            $tokens,
+            $message->title,
+            Str::limit($message->body, 80),
+            [
+                'type' => 'message',
+                'message_id' => $message->id,
+            ]
+        );
 
         return response()->json(['success' => true]);
     }

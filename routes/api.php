@@ -10,6 +10,7 @@ use App\Http\Controllers\AlliancePaymentController;
 use App\Http\Controllers\Admin\AlliancePaymentController as AdminAlliancePaymentController;
 use App\Http\Controllers\Admin\MessageController as AdminMessageController;
 use App\Http\Controllers\MessageAuthController;
+use App\Http\Controllers\DeviceTokenController;
 
 
 //authentication
@@ -70,8 +71,12 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/messages', [MessageAuthController::class, 'index']);
+    Route::get('/messages/{message}', [MessageAuthController::class, 'show']);
 });
 
 // msg app login
 
 Route::post('/member/login', [MessageAuthController::class, 'login']);
+
+Route::middleware('auth:sanctum')
+    ->post('/device-token', [DeviceTokenController::class, 'store']);
