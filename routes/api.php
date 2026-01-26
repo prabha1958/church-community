@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AlliancePaymentController as AdminAlliancePayment
 use App\Http\Controllers\Admin\MessageController as AdminMessageController;
 use App\Http\Controllers\MessageAuthController;
 use App\Http\Controllers\DeviceTokenController;
+use App\Http\Controllers\SubscriptionController;
 
 
 //authentication
@@ -72,6 +73,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/messages', [MessageAuthController::class, 'index']);
     Route::get('/messages/{message}', [MessageAuthController::class, 'show']);
+});
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/subscriptions/{member}', [SubscriptionController::class, 'show']);
 });
 
 // msg app login

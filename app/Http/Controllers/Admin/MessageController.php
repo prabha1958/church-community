@@ -20,6 +20,8 @@ class MessageController extends Controller
             'body' => 'required|string',
             'image_path' => 'nullable|image|max:2048',
             'message_type' => 'required|in:general,otp,birthday,anniversary',
+            'from' => 'sometimes|string',
+            'from_name' => 'sometimes|string'
         ]);
 
         if ($request->hasFile('image_path')) {

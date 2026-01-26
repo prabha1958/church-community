@@ -14,6 +14,8 @@ class Message extends Model
         'message_type',
         'is_published',
         'published_at',
+        'from',
+        'from_name'
     ];
 
     protected $casts = [
