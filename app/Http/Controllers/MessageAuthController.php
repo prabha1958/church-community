@@ -29,13 +29,7 @@ class MessageAuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'member' => [
-                'id' => $member->id,
-                'family_name' => $member->family_name,
-                'first_name' => $member->first_name,
-                'last_name' => $member->last_name,
-                'profile_photo' => $member->profile_photo
-            ],
+            'member' => $member,
         ]);
     }
 

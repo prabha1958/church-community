@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\MessageController as AdminMessageController;
 use App\Http\Controllers\MessageAuthController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\ChangeController;
 
 
 //authentication
@@ -85,3 +86,8 @@ Route::post('/member/login', [MessageAuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')
     ->post('/device-token', [DeviceTokenController::class, 'store']);
+
+// change of profile requests
+
+
+Route::middleware('auth:sanctum')->post('/changes/{member}', [ChangeController::class, 'store']);
