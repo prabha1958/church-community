@@ -10,6 +10,7 @@ class Change extends Model
         'member_id',
         'chng_field',
         'message',
-        'image_path'
+        'image_path',
+        'changed_on'
     ];
 }

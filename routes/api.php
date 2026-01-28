@@ -13,7 +13,7 @@ use App\Http\Controllers\MessageAuthController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ChangeController;
-
+use Illuminate\Database\Schema\IndexDefinition;
 
 //authentication
 
@@ -87,7 +87,11 @@ Route::post('/member/login', [MessageAuthController::class, 'login']);
 Route::middleware('auth:sanctum')
     ->post('/device-token', [DeviceTokenController::class, 'store']);
 
-// change of profile requests
+
+// change requests
 
 
 Route::middleware('auth:sanctum')->post('/changes/{member}', [ChangeController::class, 'store']);
+Route::middleware('auth:sanctum')->get('/changes', [ChangeController::class, 'index']);
+Route::middleware('auth:sanctum')->get('/changes/{id}', [ChangeController::class, 'show']);
+Route::middleware('auth:sanctum')->patch('/changes/{id}', [ChangeController::class, 'update']);

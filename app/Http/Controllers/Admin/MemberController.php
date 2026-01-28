@@ -10,9 +10,11 @@ use App\Models\Member;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\UpdateMemberRequest;
+use App\Models\Change;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use App\Services\AdminActionLogger;
+use App\Models\Message;
 
 class MemberController extends Controller
 
@@ -142,6 +144,16 @@ class MemberController extends Controller
             modelType: Member::class,
             modelId: $member->id
         );
+
+
+        Message::create([
+            'member_id' => $member->id,
+            'title' => 'Changes made to your profile',
+            'body' =>  'We are pleased to inform you that the changes in your profile have been effected, as per your request',
+            'message_type' => 'changes',
+            'is_published' => 1,
+            'published_at' => now(),
+        ]);
 
         return response()->json([
             'success' => true,
