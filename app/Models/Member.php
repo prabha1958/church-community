@@ -94,4 +94,9 @@ class Member extends Model
         // Sum 'total' column across related subscriptions; returns float 0.00 if none.
         return (float) $this->subscriptions()->sum('total');
     }
+
+    public function alliance()
+    {
+        return $this->hasOne(Alliance::class, 'member_id');
+    }
 }

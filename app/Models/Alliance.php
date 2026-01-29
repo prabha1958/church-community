@@ -41,10 +41,15 @@ class Alliance extends Model
         'is_published' => 'boolean',
     ];
 
-    public function member(): BelongsTo
+    public function member()
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(
+            Member::class,
+            'member_id', // FK in alliances table
+            'id'         // PK in members table
+        );
     }
+
 
     public function payments(): HasMany
     {

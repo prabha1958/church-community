@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
 
             // owner of this profile (who created it)
-            $table->foreignId('member_id')->constrained('members')->cascadeOnDelete();
+            $table->foreignId('member_id')->unique()->constrained('members')->cascadeOnDelete();
 
             // basic identity
             $table->string('family_name')->nullable();

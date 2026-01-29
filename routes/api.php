@@ -6,7 +6,6 @@ use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\AllianceController as AdminAllianceController;
-use App\Http\Controllers\AlliancePaymentController;
 use App\Http\Controllers\Admin\AlliancePaymentController as AdminAlliancePaymentController;
 use App\Http\Controllers\Admin\MessageController as AdminMessageController;
 use App\Http\Controllers\MessageAuthController;
@@ -14,6 +13,8 @@ use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ChangeController;
 use Illuminate\Database\Schema\IndexDefinition;
+use App\Http\Controllers\MemberController;
+use App\Http\Controllers\AllianceController;
 
 //authentication
 
@@ -35,6 +36,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->name('admin.')->g
     Route::post('members', [AdminMemberController::class, 'store'])->name('members.store');
     Route::patch('members/{member}/email', [AdminMemberController::class, 'updateEmail'])->name('members.updateEmail');
     Route::patch('members/{member}/mobile', [AdminMemberController::class, 'updateMobile'])->name('members.updateMobile');
+});
+
+Route::middleware('auth:sanctum')->get('/member', function (Request $request) {
+    return $request->user();
 });
 
 
@@ -61,6 +66,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('alliances/{alliance}/payments/verify', [AdminAlliancePaymentController::class, 'verify']);
     Route::post('alliances/{alliance}/payments/offline', [AdminAlliancePaymentController::class, 'payOffline']);
 });
+
+Route::middleware('auth:sanctum')->get('alliances', [AllianceController::class, 'index']);
+Route::middleware('auth:sanctum')->get('alliances/{alliance}', [AllianceController::class, 'show']);
 
 // messages
 

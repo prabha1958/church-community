@@ -27,9 +27,21 @@ class MessageAuthController extends Controller
 
         $token = $member->createToken('mobile')->plainTextToken;
 
+        $member->load([
+            'alliance:id,member_id,alliance_type,payment_date'
+        ]);
+
+
         return response()->json([
             'token' => $token,
             'member' => $member,
+            'alliance' => $member->alliance
+                ? [
+                    'alliance_id' => $member->alliance->id,
+                    'alliance_type' => $member->alliance->alliance_type,
+                    'payment_date' => $member->alliance->payment_date,
+                ]
+                : null,
         ]);
     }
 

@@ -222,13 +222,7 @@ class AlliancePaymentController extends Controller
                 ],
             ]);
 
-            // 🔑 UPDATE ALLIANCE TABLE
-            $alliance->update([
-                'amount'       => $payment->amount,
-                'payment_id'   => $data['reference_no'],
-                'payment_date' => now(),
-            ]);
-
+            $alliance->applyPayment($payment);
 
             return $payment;
         });
@@ -245,7 +239,7 @@ class AlliancePaymentController extends Controller
             ]);
         }
 
-        $alliance->applyPayment($payment);
+
 
         return response()->json([
             'success' => true,
