@@ -40,6 +40,9 @@ class AllianceController extends Controller
             ->map(function (Alliance $a) {
                 return [
                     'alliance' => $a->makeHidden('member'),
+                    'age'           => $a->date_of_birth
+                        ? \Carbon\Carbon::parse($a->date_of_birth)->age
+                        : null,
                     'member' => $a->member ? [
                         'member_id'     => $a->member->id,
                         'member_name'   => trim(
@@ -68,6 +71,9 @@ class AllianceController extends Controller
             'success' => true,
             'data' => [
                 'alliance' => $alliance->makeHidden('member'),
+                'age'           => $alliance->date_of_birth
+                    ? \Carbon\Carbon::parse($alliance->date_of_birth)->age
+                    : null,
                 'member' => $alliance->member ? [
                     'family_name' => $alliance->member->family_name,
                     'first_name'  => $alliance->member->first_name,

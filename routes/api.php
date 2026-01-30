@@ -15,6 +15,7 @@ use App\Http\Controllers\ChangeController;
 use Illuminate\Database\Schema\IndexDefinition;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\AllianceController;
+use App\Http\Controllers\Admin\PastorController as AdminPastorController;
 
 //authentication
 
@@ -103,3 +104,12 @@ Route::middleware('auth:sanctum')->post('/changes/{member}', [ChangeController::
 Route::middleware('auth:sanctum')->get('/changes', [ChangeController::class, 'index']);
 Route::middleware('auth:sanctum')->get('/changes/{id}', [ChangeController::class, 'show']);
 Route::middleware('auth:sanctum')->patch('/changes/{id}', [ChangeController::class, 'update']);
+
+//pastors
+
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/pastors', [AdminPastorController::class, 'index'])->name('pastors_list');
+    Route::get('/pastors/{pastor}', [AdminPastorController::class, 'show'])->name('pastors_single');
+    Route::post('/pastors', [AdminPastorController::class, 'store'])->name('pastors_store');
+    Route::patch('/pastors/{pastor}', [AdminPastorController::class, 'update'])->name('pastor_update');
+});
