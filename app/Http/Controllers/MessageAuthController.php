@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Member;
 use App\Models\Message;
+use Illuminate\Support\Facades\Log;
 
 class MessageAuthController extends Controller
 {
     public function login(Request $request)
     {
+        Log::info('login reached');
         $data = $request->validate([
             'member_id' => 'required|integer',
             'mobile_number' => 'required|string',

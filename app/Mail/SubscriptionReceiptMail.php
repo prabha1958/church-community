@@ -11,14 +11,16 @@ class SubscriptionReceiptMail extends Mailable
 {
     public Payment $payment;
     public $fy;
+    public Member $member;
 
 
 
 
-    public function __construct(Payment $payment, $fy)
+    public function __construct(Payment $payment, $fy, Member $member)
     {
         $this->payment = $payment;
         $this->fy = $fy;
+        $this->member = $member;
     }
 
     public function build()

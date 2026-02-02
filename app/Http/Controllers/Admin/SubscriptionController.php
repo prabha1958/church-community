@@ -113,7 +113,7 @@ class SubscriptionController extends Controller
 
 
 
-    public function verifyPayment(Request $request)
+    public function verifyPayment(Request $request, Member $member)
     {
 
 
@@ -171,7 +171,7 @@ class SubscriptionController extends Controller
 
             if ($payment->member && $payment->member->email) {
                 Mail::to($payment->member->email)
-                    ->send(new SubscriptionReceiptMail($payment, $fy));
+                    ->send(new SubscriptionReceiptMail($payment, $fy, $member));
             }
         } catch (\Throwable $e) {
             Log::error('Receipt email failed', [
@@ -370,7 +370,7 @@ class SubscriptionController extends Controller
 
         // 📧 email receipt (same mail class)
         $payment = Payment::latest()->first();
-        Mail::to($member->email)->send(new SubscriptionReceiptMail($payment, $fy));
+        Mail::to($member->email)->send(new SubscriptionReceiptMail($payment, $fy, $member));
 
         AdminActionLogger::log(
             action: 'Subscription.offline_pay',

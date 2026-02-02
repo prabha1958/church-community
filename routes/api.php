@@ -16,6 +16,7 @@ use Illuminate\Database\Schema\IndexDefinition;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\AllianceController;
 use App\Http\Controllers\Admin\PastorController as AdminPastorController;
+use App\Http\Controllers\Api\MemberSessionController;
 
 //authentication
 
@@ -113,3 +114,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/pastors', [AdminPastorController::class, 'store'])->name('pastors_store');
     Route::patch('/pastors/{pastor}', [AdminPastorController::class, 'update'])->name('pastor_update');
 });
+
+//session
+
+Route::middleware('auth:sanctum')->get(
+    '/member/session',
+    [MemberSessionController::class, 'show']
+);

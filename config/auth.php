@@ -36,11 +36,13 @@ return [
     */
 
     'guards' => [
-        'web' => [
-            'driver' => 'session',
-            'provider' => 'users',
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => 'members',
         ],
     ],
+
+
 
     /*
     |--------------------------------------------------------------------------
@@ -60,9 +62,9 @@ return [
     */
 
     'providers' => [
-        'users' => [
+        'members' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => App\Models\Member::class,
         ],
 
         // 'users' => [
