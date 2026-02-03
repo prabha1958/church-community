@@ -117,9 +117,11 @@ MSG;
             'updated_at' => now(),
         ]);
 
+        $imagePath = $member->getRawOriginal('couple_pic');
         // 📬 Record in messages table (for app inbox + push)
         Message::create([
             'member_id' => $member->id,
+            'image_path' => $imagePath,
             'title' => 'Happy Wedding Anniversary 🎉',
             'body' => $messageText,
             'message_type' => 'anniversary',

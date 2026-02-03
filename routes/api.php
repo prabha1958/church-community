@@ -17,6 +17,8 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\AllianceController;
 use App\Http\Controllers\Admin\PastorController as AdminPastorController;
 use App\Http\Controllers\Api\MemberSessionController;
+use App\Http\Controllers\Admin\AnnouncementController as AdminAnnouncementController;
+use App\Http\Controllers\Admin\PastorateComMemberController as AdminPastorateComMemberController;
 
 //authentication
 
@@ -121,3 +123,24 @@ Route::middleware('auth:sanctum')->get(
     '/member/session',
     [MemberSessionController::class, 'show']
 );
+
+// Announcments
+
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::get('announcements', [AdminAnnouncementController::class, 'index']);
+    Route::get('announcements/{announcement}', [AdminAnnouncementController::class, 'show']);
+    Route::post('announcements', [AdminAnnouncementController::class, 'store']);
+    Route::patch('announcements/{announcement}', [AdminAnnouncementController::class, 'update']);
+    Route::post('announcements/{announcement}/send', [AdminAnnouncementController::class, 'publish']);
+});
+
+
+// Pastorate Committee members
+
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::get('commembers', [AdminPastorateComMemberController::class, 'index']);
+    Route::get('commembers/{commember}', [AdminPastorateComMemberController::class, 'show']);
+    Route::post('commembers', [AdminPastorateComMemberController::class, 'store']);
+    Route::patch('commembers/{commember}', [AdminPastorateComMemberController::class, 'update']);
+    Route::post('commembers/{commember}/send', [AdminPastorateComMemberController::class, 'publish']);
+});

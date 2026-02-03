@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\Message;
 
 class OtpAuthController extends Controller
 {
@@ -64,7 +65,7 @@ class OtpAuthController extends Controller
             $contact = $digits;
         }
 
-        Log::info($contact);
+
 
         // Find member by email or mobile_number
         if ($isEmail) {
@@ -111,10 +112,26 @@ class OtpAuthController extends Controller
         if ($isEmail) {
             try {
                 Mail::to($contact)->send(new OtpMail($contact, $rawCode));
+
+                Message::create([
+                    'member_id' => $member->id,
+                    'title' => 'OTP to login ',
+                    'body' => $smsMessage,
+                    'message_type' => 'otp',
+                    'is_published' => 1,
+                    'published_at' => now(),
+                ]);
+
+
                 return response()->json([
                     'success' => true,
                     'message' => 'OTP sent to the registered email.'
                 ]);
+
+                // CREATE MESSAGE
+
+
+
             } catch (\Throwable $e) {
                 // remove OTP record on send failure
                 $otp->delete();

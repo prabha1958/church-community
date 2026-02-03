@@ -78,6 +78,7 @@ class SendBirthdayWishes extends Command
 
             $this->line("Processing member ID {$member->id}");
 
+
             // 📧 EMAIL
             if ($toEmail && ! $dry) {
                 try {
@@ -117,8 +118,11 @@ class SendBirthdayWishes extends Command
                     'whatsapp_sent' => $whatsAppSent,
                 ]);
 
+                $imagePath = $member->getRawOriginal('profile_photo');
+
                 Message::create([
                     'member_id' => $member->id,
+                    'image_path' => $imagePath,
                     'title' => 'Happy Birthday 🎉',
                     'body' => $this->buildWhatsappText($member, $templateOption),
                     'message_type' => 'birthday',
