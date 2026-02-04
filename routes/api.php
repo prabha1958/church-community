@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\PastorController as AdminPastorController;
 use App\Http\Controllers\Api\MemberSessionController;
 use App\Http\Controllers\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Admin\PastorateComMemberController as AdminPastorateComMemberController;
+use App\Http\Controllers\Admin\EventController as AdminEventController;
 
 //authentication
 
@@ -143,4 +144,19 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('commembers', [AdminPastorateComMemberController::class, 'store']);
     Route::patch('commembers/{commember}', [AdminPastorateComMemberController::class, 'update']);
     Route::post('commembers/{commember}/send', [AdminPastorateComMemberController::class, 'publish']);
+});
+
+
+// events
+
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::post('events', [AdminEventController::class, 'store'])->name('admin.events.store');
+    Route::get('events', [AdminEventController::class, 'index'])->name('admin.events');
+    Route::patch('events/{event}', [AdminEventController::class, 'update'])->name('admin.events.update');
+    Route::patch('events/{event}/hide', [AdminEventController::class, 'hide']);
+    Route::patch('events/{event}/show', [AdminEventController::class, 'display']);
+    Route::delete('events/{event}', [AdminEventController::class, 'destroy'])->name('admin.events.destroy');
+
+    // optional endpoint to remove a single photo
+    Route::delete('events/{event}/photo', [AdminEventController::class, 'removePhoto'])->name('admin.events.photo.remove');
 });
