@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 use App\Models\BirthdayGreeting;
 use App\Models\Message;
+use Illuminate\Support\Facades\DB;
 
 
 class SendBirthdayWishes extends Command
@@ -129,6 +130,11 @@ class SendBirthdayWishes extends Command
                     'is_published' => 1,
                     'published_at' => now(),
                 ]);
+
+                DB::table('system_runs')->updateOrInsert(
+                    ['type' => 'birthday'],
+                    ['last_run_at' => now(), 'status' => 'success']
+                );
             } catch (\Throwable $e) {
                 Log::error('Failed to persist birthday greeting', [
                     'member_id' => $member->id,

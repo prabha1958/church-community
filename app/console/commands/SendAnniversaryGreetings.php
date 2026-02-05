@@ -129,6 +129,11 @@ MSG;
             'published_at' => now(),
         ]);
 
+        DB::table('system_runs')->updateOrInsert(
+            ['type' => 'anniversary'],
+            ['last_run_at' => now(), 'status' => 'success']
+        );
+
         $this->info("✅ Anniversary processed for {$firstName}");
     }
 }

@@ -20,6 +20,9 @@ use App\Http\Controllers\Api\MemberSessionController;
 use App\Http\Controllers\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Admin\PastorateComMemberController as AdminPastorateComMemberController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
+use App\Http\Controllers\Admin\PoorFeedingController as AdminPoorFeedingController;
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminSystemController;
 
 //authentication
 
@@ -160,3 +163,29 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // optional endpoint to remove a single photo
     Route::delete('events/{event}/photo', [AdminEventController::class, 'removePhoto'])->name('admin.events.photo.remove');
 });
+
+//Poor feeding
+
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::post('poor-feedings', [AdminPoorFeedingController::class, 'store']);
+    Route::get('poor-feedings', [AdminPoorFeedingController::class, 'index']);
+    Route::put('poor-feedings/{poorFeeding}', [AdminPoorFeedingController::class, 'update']);
+    Route::patch('poor-feedings/{poorFeeding}', [AdminPoorFeedingController::class, 'update']);
+    Route::delete('poor-feedings/{poorFeeding}', [AdminPoorFeedingController::class, 'destroy']);
+    Route::patch('poor-feedings/{pfeeding}/hide', [AdminPoorFeedingController::class, 'hide']);
+    Route::patch('poor-feedings/{pfeeding}/show', [AdminPoorFeedingController::class, 'display']);
+
+    // optional remove one photo endpoint
+    Route::delete('poor-feedings/{poorFeedings}/photo', [AdminPoorFeedingController::class, 'removePhoto']);
+});
+
+
+//dashborad
+
+Route::middleware(['auth:sanctum', 'admin'])
+    ->get('admin/dashboard', [AdminDashboardController::class, 'index']);
+
+//SYSTEM RUNS
+
+Route::post('admin/run/birthday', [AdminSystemController::class, 'runBirthday']);
+Route::post('admin/run/anniversary', [AdminSystemController::class, 'runAnniversary']);
