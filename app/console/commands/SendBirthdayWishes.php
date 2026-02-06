@@ -154,7 +154,7 @@ class SendBirthdayWishes extends Command
     protected function buildWhatsappText($member, ?string $template = null): string
     {
         $name = $member->first_name ?? $member->name ?? 'Friend';
-        $default = "Happy Birthday, {$name}! 🎉\nWarm wishes from your Church. God bless you.";
+        $default = "Happy Birthday, {$name}! 🎉\nWarm wishes from CSI CENTENARY WESLEY CHURCH on your Birthday. God bless you.";
         if (! $template) return $default;
 
         // Simple replacements: {name}
