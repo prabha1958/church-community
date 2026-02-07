@@ -85,6 +85,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/messages/{message}/send', [AdminMessageController::class, 'publish']);
     Route::get('/messages', [AdminMessageController::class, 'index']);
     Route::put('/messages/{message}/update', [AdminMessageController::class, 'update']);
+    Route::patch('messages/{message}/show', [AdminMessageController::class, 'display']);
+    Route::patch('messages/{message}/hide', [AdminMessageController::class, 'hide']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {

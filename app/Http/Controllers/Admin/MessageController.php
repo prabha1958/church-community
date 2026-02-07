@@ -99,4 +99,63 @@ class MessageController extends Controller
             'message' => $message
         ]);
     }
+
+    public function hide(Message $message)
+    {
+
+
+
+        $message->update([
+            'is_published' => 0,
+
+        ]);
+
+
+
+        $tokens = DeviceToken::pluck('token')->toArray();
+
+        ExpoPushService::send(
+            $tokens,
+            $message->title,
+            Str::limit($message->body, 80),
+            [
+                'type' => 'message',
+                'message_id' => $message->id,
+
+            ]
+        );
+
+
+        return response()->json(['success' => true]);
+    }
+
+    public function display(Message $message)
+    {
+
+
+
+
+        $message->update([
+            'is_published' => 1,
+
+        ]);
+
+
+
+        $tokens = DeviceToken::pluck('token')->toArray();
+
+        ExpoPushService::send(
+            $tokens,
+            $message->title,
+            Str::limit($message->body, 80),
+            [
+                'type' => 'message',
+                'message_id' => $message->id,
+
+            ]
+        );
+
+
+        return response()->json(['success' => true]);
+    }
 }
