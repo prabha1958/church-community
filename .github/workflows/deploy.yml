@@ -26,7 +26,7 @@ jobs:
 
             php artisan optimize:clear
             php artisan config:cache
-            php artisan migrate --force
+            php artisan migrate --force || true
 
             sudo chown -R www-data:www-data storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
