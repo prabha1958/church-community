@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Subscription;
 use App\Models\Payment;
 use App\Models\Member;
-use App\Services\RazorpayService;
+use App\Services\RazorPayService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -21,9 +21,9 @@ use App\Services\AdminActionLogger;
 
 class SubscriptionController extends Controller
 {
-    protected RazorpayService $rz;
+    protected RazorPayService $rz;
 
-    public function __construct(RazorpayService $rz)
+    public function __construct(RazorPayService $rz)
     {
         $this->rz = $rz;
     }
