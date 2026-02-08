@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class AdminSystemController extends Controller
 {
     public function runBirthday()
     {
+
         Artisan::call('send:birthday-wishes');
         DB::table('system_runs')->updateOrInsert(
             ['type' => 'birthday'],

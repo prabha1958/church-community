@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\PoorFeedingController as AdminPoorFeedingController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminSystemController;
+use App\Http\Controllers\AdminGreetingController;
 
 //authentication
 
@@ -191,3 +192,11 @@ Route::middleware(['auth:sanctum', 'admin'])
 
 Route::post('admin/run/birthday', [AdminSystemController::class, 'runBirthday']);
 Route::post('admin/run/anniversary', [AdminSystemController::class, 'runAnniversary']);
+
+
+Route::post('admin/greetings/birthday/run', [AdminGreetingController::class, 'runBirthday']);
+Route::get('admin/greetings/birthday/logs', [AdminGreetingController::class, 'logs']);
+
+
+Route::post('admin/greetings/anniversay/run', [AdminGreetingController::class, 'runAnniversary']);
+Route::get('admin/greetings/anniversary/logs', [AdminGreetingController::class, 'annlogs']);

@@ -133,7 +133,11 @@ class SendBirthdayWishes extends Command
 
                 DB::table('system_runs')->updateOrInsert(
                     ['type' => 'birthday'],
-                    ['last_run_at' => now(), 'status' => 'success']
+                    [
+                        'last_run_at' => now(),
+                        'status' => 'success',
+                        'updated_at' => now(),
+                    ]
                 );
             } catch (\Throwable $e) {
                 Log::error('Failed to persist birthday greeting', [

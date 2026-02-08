@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use App\Mail\AllianceCreatedMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Member;
+use App\Models\Subscription;
+use Carbon\Carbon;
 
 class AllianceController extends Controller
 {
@@ -18,19 +21,71 @@ class AllianceController extends Controller
      * Admin creates an alliance profile for any member (member_id required).
      */
 
+
     public function store(AdminCreateAllianceRequest $request): JsonResponse
     {
         $data = $request->validated();
 
+        /* -------------------------------------------------
+     | 1. Validate member existence & active status
+     -------------------------------------------------*/
+        $member = Member::where('id', $data['member_id'])
+            ->where('status_flag', 1) // in force
+            ->first();
+
+        if (! $member) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Member is not active or does not exist.',
+            ], 422);
+        }
+
+        /* -------------------------------------------------
+     | 2. Check subscription status (paid up to date)
+     -------------------------------------------------*/
+        $today = Carbon::today();
+        $financialYear = Subscription::financialYearForDate($today);
+
+        $subscription = Subscription::where('member_id', $member->id)
+            ->where('financial_year', $financialYear)
+            ->first();
+
+        if (! $subscription) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subscription not found for the current financial year.',
+            ], 422);
+        }
+
+        $unpaidMonths = $subscription->unpaidMonthsUpTo($today);
+
+        if (!empty($unpaidMonths)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subscription payment is pending. Please clear dues before creating an alliance.',
+                'pending_months' => $unpaidMonths,
+            ], 422);
+        }
+
+        /* -------------------------------------------------
+     | 3. Handle file uploads
+     -------------------------------------------------*/
         foreach (['profile_photo', 'photo1', 'photo2', 'photo3'] as $field) {
             if ($request->hasFile($field)) {
-                $data[$field] = $request->file($field)->store('alliances/photos', 'public');
+                $data[$field] = $request->file($field)
+                    ->store('alliances/photos', 'public');
             }
         }
 
+        /* -------------------------------------------------
+     | 4. Create alliance
+     -------------------------------------------------*/
         $alliance = Alliance::create($data);
         $alliance->load('member');
 
+        /* -------------------------------------------------
+     | 5. Send email (optional)
+     -------------------------------------------------*/
         if ($alliance->member?->email) {
             Mail::to($alliance->member->email)
                 ->send(new AllianceCreatedMail($alliance));
@@ -42,6 +97,7 @@ class AllianceController extends Controller
             'alliance' => $alliance,
         ], 201);
     }
+
 
     public function index(Request $request)
     {

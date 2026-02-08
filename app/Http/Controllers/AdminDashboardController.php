@@ -10,11 +10,13 @@ use App\Models\PoorFeeding;
 use App\Models\Alliance;
 use Illuminate\Support\Facades\DB;
 use App\Models\Payment;
+use Illuminate\Support\Facades\Log;
 
 class AdminDashboardController extends Controller
 {
     public function index()
     {
+        Log::info('church_community', [DB::connection()->getDatabaseName()]);
         $fy = Subscription::financialYearForDate();
 
         return response()->json([
@@ -36,12 +38,15 @@ class AdminDashboardController extends Controller
                 'published' => Alliance::where('payment_date', '!=', null)->count(),
             ],
 
-            'greetings' => [
-                'birthday_last_run' => DB::table('system_runs')
-                    ->where('type', 'birthday')->value('last_run_at'),
-                'anniversary_last_run' => DB::table('system_runs')
-                    ->where('type', 'anniversary')->value('last_run_at'),
-            ],
+            'birthday_last_run' => DB::table('system_runs')
+                ->where('type', 'birthday')
+                ->orderByDesc('last_run_at')
+                ->value('last_run_at'),
+
+            'anniversary_last_run' => DB::table('system_runs')
+                ->where('type', 'anniversary')
+                ->orderByDesc('last_run_at')
+                ->value('last_run_at'),
 
             'poor_feeding' => PoorFeeding::with([
                 'sponsor' => function ($q) {
