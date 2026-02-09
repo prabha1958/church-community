@@ -16,7 +16,7 @@ class PastorController extends Controller
     public function index(Request $request)
     {
         $perPage = (int) $request->query('per_page', 20);
-        $data = Pastor::orderBy('order_no');
+        $data = Pastor::orderBy('order_no')->get();
 
 
         return response()->json(['success' => true, 'data' => $data]);
