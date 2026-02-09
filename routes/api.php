@@ -124,6 +124,12 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::patch('/pastors/{pastor}', [AdminPastorController::class, 'update'])->name('pastor_update');
 });
 
+
+Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+    Route::get('/pastors', [AdminPastorController::class, 'index'])->name('pastors_list');
+});
+
+
 //session
 
 Route::middleware('auth:sanctum')->get(
