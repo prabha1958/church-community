@@ -126,7 +126,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 });
 
 
-Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/pastors', [PastorController::class, 'index'])->name('pastors_list');
 });
 
