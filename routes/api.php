@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\PoorFeedingController as AdminPoorFeedingControll
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminSystemController;
 use App\Http\Controllers\AdminGreetingController;
+use App\Http\Controllers\PastorController;
 
 //authentication
 
@@ -126,7 +127,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
 
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
-    Route::get('/pastors', [AdminPastorController::class, 'index'])->name('pastors_list');
+    Route::get('/pastors', [PastorController::class, 'index'])->name('pastors_list');
 });
 
 
