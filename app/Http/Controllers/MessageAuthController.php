@@ -11,7 +11,14 @@ class MessageAuthController extends Controller
 {
     public function login(Request $request)
     {
-        Log::info('login reached');
+
+        Log::info('LOGIN HIT', [
+            'method' => $request->method(),
+            'payload' => $request->all(),
+        ]);
+
+
+
         $data = $request->validate([
             'member_id' => 'required|integer',
             'mobile_number' => 'required|string',
