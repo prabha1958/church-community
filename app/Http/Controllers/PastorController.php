@@ -16,18 +16,10 @@ class PastorController extends Controller
     public function index(Request $request)
     {
         $perPage = (int) $request->query('per_page', 20);
-        $query = Pastor::orderBy('order_no')->orderBy('name');
+        $data = Pastor::orderBy('order_no');
 
-        // optional filter: active (no leaving date or leaving date in future)
-        if ($request->boolean('active')) {
-            $query->where(function ($q) {
-                $q->whereNull('date_of_leaving')
-                    ->orWhere('date_of_leaving', '>=', now()->toDateString());
-            });
-        }
 
-        $list = $query->paginate($perPage);
-        return response()->json(['success' => true, 'data' => $list]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
