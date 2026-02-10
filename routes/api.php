@@ -26,6 +26,7 @@ use App\Http\Controllers\AdminSystemController;
 use App\Http\Controllers\AdminGreetingController;
 use App\Http\Controllers\PastorController;
 use App\Models\PastorateComMember;
+use App\Http\Controllers\EventController;
 
 //authentication
 
@@ -175,6 +176,13 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
     // optional endpoint to remove a single photo
     Route::delete('events/{event}/photo', [AdminEventController::class, 'removePhoto'])->name('admin.events.photo.remove');
+});
+
+
+Route::middleware(['auth:sanctum'])->group(function () {
+
+    Route::get('events', [EventController::class, 'index']);
+    Route::get('events/{event}', [EventController::class, 'show']);
 });
 
 //Poor feeding
