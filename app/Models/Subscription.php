@@ -166,4 +166,20 @@ class Subscription extends Model
         ];
         return $map[$key];
     }
+
+    public function monthStatus(): array
+    {
+        $months = self::fyMonths(); // ['apr','may',...]
+        $out = [];
+
+        foreach ($months as $m) {
+            $out[] = [
+                'month' => $m,
+                'paid'  => ! empty($this->{"{$m}_payment_id"}),
+                'paid_at' => $this->{"{$m}_paid_at"},
+            ];
+        }
+
+        return $out;
+    }
 }

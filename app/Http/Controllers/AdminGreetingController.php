@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Services\BirthdayGreetingService;
 use App\Services\AnniversaryGreetingService;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
 
 class AdminGreetingController extends Controller
 {
@@ -19,11 +21,18 @@ class AdminGreetingController extends Controller
     }
     public function runAnniversary(AnniversaryGreetingService $service)
     {
-        DB::table('system_run_logs')->where('type', 'anniversary')->delete();
+        // Clear previous logs (optional)
+        DB::table('system_run_logs')
+            ->where('type', 'anniversary')
+            ->delete();
 
-        $service->run();
+        // Run for today, collect logs silently
+        $service->run(Carbon::now());
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Anniversary greetings executed successfully',
+        ]);
     }
 
 

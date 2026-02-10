@@ -22,11 +22,16 @@ class AnniversaryGreetingService
         ]);
     }
 
-    public function run(bool $sendWhatsapp = false): void
+    public function run(Carbon $date, callable $log = null): void
     {
         $today = Carbon::today();
 
-        $this->log('anniversary', "🔍 Verifying anniversaries for {$today->toDateString()}");
+        $month = $date->month;
+        $day   = $date->day;
+
+        $log("🎉 Checking anniversaries for {$date->toFormattedDateString()}");
+
+
 
         $members = Member::query()
             ->where('gender', 'male')

@@ -26,6 +26,7 @@ class AllianceController extends Controller
     {
         $data = $request->validated();
 
+
         /* -------------------------------------------------
      | 1. Validate member existence & active status
      -------------------------------------------------*/

@@ -17,11 +17,13 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\SubscriptionReceiptMail;
 use Illuminate\Support\Facades\Mail;
 use App\Services\AdminActionLogger;
+use App\Services\SubscriptionReceiptService;
+use App\Models\Message;
 
 
 class SubscriptionController extends Controller
 {
-    protected RazorPayService $rz;
+    protected  $rz;
 
     public function __construct(RazorPayService $rz)
     {
@@ -54,7 +56,12 @@ class SubscriptionController extends Controller
         $sub = Subscription::firstOrCreate(['member_id' => $member->id, 'financial_year' => $fy], ['monthly_fee' => $member->membership_fee]);
         $unpaid = $sub->unpaidMonthsUpTo(Carbon::now());
         $dueAmount = count($unpaid) * $sub->monthly_fee;
-        return response()->json(['success' => true, 'unpaid_months' => $unpaid, 'due_amount' => $dueAmount, 'subscription' => $sub]);
+        return response()->json([
+            'success' => true,
+            'months' => $sub->monthStatus(),
+            'due_amount' => $dueAmount,
+            'subscription' => $sub
+        ]);
     }
 
     /**
@@ -169,9 +176,12 @@ class SubscriptionController extends Controller
             $fy = Subscription::financialYearForDate();
             $payment->load('member', 'subscription');
 
+            $receiptPath = app(SubscriptionReceiptService::class)
+                ->generate($payment);
+
             if ($payment->member && $payment->member->email) {
                 Mail::to($payment->member->email)
-                    ->send(new SubscriptionReceiptMail($payment, $fy, $member));
+                    ->send(new SubscriptionReceiptMail($payment, $fy, $member, $receiptPath));
             }
         } catch (\Throwable $e) {
             Log::error('Receipt email failed', [
@@ -228,7 +238,7 @@ class SubscriptionController extends Controller
                     ->orWhere('first_name', 'like', "%{$s}%")
                     ->orWhere('last_name', 'like', "%{$s}%");
             })
-            ->orderBy('id')
+            ->orderBy('updated_at')
             ->get();
 
         $rows = $members->map(function ($member) use ($fy, $now) {
@@ -360,6 +370,7 @@ class SubscriptionController extends Controller
 
 
 
+
             foreach ($data['months'] as $m) {
                 $sub->update([
                     "{$m}_payment_id" => $payment->id,
@@ -368,9 +379,27 @@ class SubscriptionController extends Controller
             }
         });
 
+
+
+
         // 📧 email receipt (same mail class)
         $payment = Payment::latest()->first();
-        Mail::to($member->email)->send(new SubscriptionReceiptMail($payment, $fy, $member));
+
+        $receiptPath = app(SubscriptionReceiptService::class)
+            ->generate($payment);
+        Mail::to($member->email)->send(new SubscriptionReceiptMail($payment, $fy, $member, $receiptPath));
+
+        Log::info($receiptPath);
+
+        Message::create([
+            'member_id' => $payment->member_id,
+            'title' => 'Subscription Payment Receipt',
+            'body' => 'Your subscription payment has been received. Please find the receipt attached.',
+            'message_type' => 'subscription',
+            'attachment_path' => $receiptPath,   // 🔑 PDF
+            'is_published' => 1,
+            'published_at' => now(),
+        ]);
 
         AdminActionLogger::log(
             action: 'Subscription.offline_pay',

@@ -4,6 +4,9 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
+use App\Models\Alliance;
+use Illuminate\Validation\Validator;
 
 class AdminCreateAllianceRequest extends FormRequest
 {
@@ -39,5 +42,31 @@ class AdminCreateAllianceRequest extends FormRequest
             'about_family' => 'sometimes|nullable|string',
             'alliance_type' => ['required', 'in:bride,bridegroom'],
         ];
+    }
+
+    public function withValidator(Validator $validator)
+    {
+        $validator->after(function ($validator) {
+
+            $memberId = $this->input('member_id');
+
+            if (! $memberId) {
+                return;
+            }
+
+            $sixMonthsAgo = Carbon::now()->subMonths(6);
+
+            $existingAlliance = Alliance::where('member_id', $memberId)
+                ->whereNotNull('payment_date')
+                ->where('payment_date', '>=', $sixMonthsAgo)
+                ->exists();
+
+            if ($existingAlliance) {
+                $validator->errors()->add(
+                    'member_id',
+                    'This member already has an active alliance within the last 6 months.'
+                );
+            }
+        });
     }
 }

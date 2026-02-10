@@ -12,15 +12,17 @@ class SubscriptionReceiptMail extends Mailable
     public Payment $payment;
     public $fy;
     public Member $member;
+    public $receiptPath;
 
 
 
 
-    public function __construct(Payment $payment, $fy, Member $member)
+    public function __construct(Payment $payment, $fy, Member $member, $receiptPath)
     {
         $this->payment = $payment;
         $this->fy = $fy;
         $this->member = $member;
+        $this->receiptPath = $receiptPath;
     }
 
     public function build()
@@ -50,9 +52,8 @@ class SubscriptionReceiptMail extends Mailable
                 'payment' => $payment,
                 'fy' => $this->fy,
             ])
-            ->attachData(
-                $pdf->output(),
-                'subscription-receipt-' . $payment->id . '.pdf',
+            ->attach(
+                storage_path("app/public/{$this->receiptPath}"),
                 ['mime' => 'application/pdf']
             );
     }
