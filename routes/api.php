@@ -25,6 +25,7 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminSystemController;
 use App\Http\Controllers\AdminGreetingController;
 use App\Http\Controllers\PastorController;
+use App\Models\PastorateComMember;
 
 //authentication
 
@@ -128,6 +129,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/pastors', [PastorController::class, 'index'])->name('pastors_list');
+    Route::get('/pastors/{pastor}', [PastorController::class, 'show']);
+    Route::post('/pastors', [PastorateComMember::class, 'store']);
 });
 
 
