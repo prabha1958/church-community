@@ -24,57 +24,86 @@ class BirthdayGreetingService
 
     public function run(bool $sendWhatsapp = false): void
     {
-        $today = Carbon::today();
-        $year = $today->year;
 
-        $this->log('birthday', "🔍 Verifying birthdays for {$today->toDateString()}");
+        try {
 
-        $members = Member::whereMonth('date_of_birth', $today->month)
-            ->whereDay('date_of_birth', $today->day)
-            ->get();
+            $today = Carbon::today();
+            $year = $today->year;
 
-        $this->log('birthday', "🎂 Found {$members->count()} member(s)");
+            $this->log('birthday', "🔍 Verifying birthdays for {$today->toDateString()}");
 
-        foreach ($members as $member) {
+            $members = Member::whereMonth('date_of_birth', $today->month)
+                ->whereDay('date_of_birth', $today->day)
+                ->get();
 
-            $alreadySent = BirthdayGreeting::where('member_id', $member->id)
-                ->where('greeted_year', $year)
-                ->exists();
+            $this->log('birthday', "🎂 Found {$members->count()} member(s)");
 
-            if ($alreadySent) {
-                $this->log('birthday', "⏭ Skipping {$member->first_name} (already sent)");
-                continue;
+            foreach ($members as $member) {
+
+                $alreadySent = BirthdayGreeting::where('member_id', $member->id)
+                    ->where('greeted_year', $year)
+                    ->exists();
+
+                if ($alreadySent) {
+                    $this->log('birthday', "⏭ Skipping {$member->first_name} (already sent)");
+                    continue;
+                }
+
+                // Email
+                if ($member->email) {
+                    Mail::to($member->email)->send(new \App\Mail\BirthdayWishMail($member));
+                    $this->log('birthday', "📧 Email sent to {$member->email}", 'success');
+                }
+
+                BirthdayGreeting::create([
+                    'member_id' => $member->id,
+                    'greeted_on' => $today,
+                    'greeted_year' => $year,
+                    'email_sent' => true,
+                    'whatsapp_sent' => false,
+                ]);
+
+                Message::create([
+                    'member_id' => $member->id,
+                    'title' => 'Happy Birthday 🎉',
+                    'body' => "Happy Birthday {$member->first_name}!",
+                    'message_type' => 'birthday',
+                    'image_path' => $member->profile_photo,
+                    'is_published' => 1,
+                ]);
             }
 
-            // Email
-            if ($member->email) {
-                Mail::to($member->email)->send(new \App\Mail\BirthdayWishMail($member));
-                $this->log('birthday', "📧 Email sent to {$member->email}", 'success');
-            }
+            DB::table('system_runs')->updateOrInsert(
+                ['type' => 'birthday'],
+                ['last_run_at' => now(), 'status' => 'success']
+            );
 
-            BirthdayGreeting::create([
-                'member_id' => $member->id,
-                'greeted_on' => $today,
-                'greeted_year' => $year,
-                'email_sent' => true,
-                'whatsapp_sent' => false,
-            ]);
+            DB::table('system_runs')->updateOrInsert(
+                ['type' => 'birthday'],
+                [
+                    'last_run_at' => now(),
+                    'status' => 'success',
+                    'updated_at' => now(),
+                ]
+            );
 
-            Message::create([
-                'member_id' => $member->id,
-                'title' => 'Happy Birthday 🎉',
-                'body' => "Happy Birthday {$member->first_name}!",
-                'message_type' => 'birthday',
-                'image_path' => $member->profile_photo,
-                'is_published' => 1,
+            $this->log('birthday', "✅ Birthday greetings completed", 'success');
+        } catch (\Throwable $e) {
+
+            DB::table('system_runs')->updateOrInsert(
+                ['type' => 'birthday'],
+                [
+                    'last_run_at' => now(),
+                    'status' => 'failed',
+                    'updated_at' => now(),
+                ]
+            );
+
+            $this->log('birthday', "❌ ERROR: " . $e->getMessage(), 'error');
+
+            Log::error('Birthday cron failed', [
+                'error' => $e->getMessage()
             ]);
         }
-
-        DB::table('system_runs')->updateOrInsert(
-            ['type' => 'birthday'],
-            ['last_run_at' => now(), 'status' => 'success']
-        );
-
-        $this->log('birthday', "✅ Birthday greetings completed", 'success');
     }
 }
