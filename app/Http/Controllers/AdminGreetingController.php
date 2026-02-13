@@ -19,6 +19,8 @@ class AdminGreetingController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+
     public function runAnniversary(AnniversaryGreetingService $service)
     {
         // Clear previous logs (optional)

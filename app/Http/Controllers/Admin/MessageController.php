@@ -65,7 +65,7 @@ class MessageController extends Controller
 
     public function index()
     {
-        $data = Message::orderBy('created_at', 'desc')->get();
+        $data = Message::orderBy('id', 'desc')->get();
 
         return response()->json([
             'success' => true,
@@ -111,19 +111,6 @@ class MessageController extends Controller
         ]);
 
 
-
-        $tokens = DeviceToken::pluck('token')->toArray();
-
-        ExpoPushService::send(
-            $tokens,
-            $message->title,
-            Str::limit($message->body, 80),
-            [
-                'type' => 'message',
-                'message_id' => $message->id,
-
-            ]
-        );
 
 
         return response()->json(['success' => true]);

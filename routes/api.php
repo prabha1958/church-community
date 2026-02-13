@@ -216,5 +216,5 @@ Route::post('admin/greetings/birthday/run', [AdminGreetingController::class, 'ru
 Route::get('admin/greetings/birthday/logs', [AdminGreetingController::class, 'logs']);
 
 
-Route::post('admin/greetings/anniversay/run', [AdminGreetingController::class, 'runAnniversary']);
+Route::post('admin/greetings/anniversary/run', [AdminGreetingController::class, 'runAnniversary']);
 Route::get('admin/greetings/anniversary/logs', [AdminGreetingController::class, 'annlogs']);
