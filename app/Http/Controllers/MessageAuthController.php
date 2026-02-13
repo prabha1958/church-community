@@ -11,48 +11,51 @@ class MessageAuthController extends Controller
 {
     public function login(Request $request)
     {
-
         Log::info('LOGIN HIT', [
             'method' => $request->method(),
             'payload' => $request->all(),
         ]);
 
+        try {
 
+            $data = $request->validate([
+                'member_id' => 'required|integer',
+                'mobile_number' => 'required|string',
+            ]);
 
-        $data = $request->validate([
-            'member_id' => 'required|integer',
-            'mobile_number' => 'required|string',
-        ]);
+            $member = Member::where('id', $data['member_id'])
+                ->where('mobile_number', $data['mobile_number'])
+                ->first();
 
-        $member = Member::where('id', $data['member_id'])
-            ->where('mobile_number', $data['mobile_number'])
-            ->first();
+            if (! $member) {
+                return response()->json([
+                    'message' => 'Invalid Member ID or Mobile Number'
+                ], 401);
+            }
 
-        if (! $member) {
+            $token = $member->createToken('mobile')->plainTextToken;
+
+            $member->load([
+                'alliance:id,member_id,alliance_type,payment_date'
+            ]);
+
             return response()->json([
-                'message' => 'Invalid Member ID or Mobile Number'
-            ], 401);
+                'token' => $token,
+                'member' => $member,
+                'alliance' => $member->alliance,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("LOGIN ERROR", [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Server error',
+            ], 500);
         }
-
-        $token = $member->createToken('mobile')->plainTextToken;
-
-        $member->load([
-            'alliance:id,member_id,alliance_type,payment_date'
-        ]);
-
-
-        return response()->json([
-            'token' => $token,
-            'member' => $member,
-            'alliance' => $member->alliance
-                ? [
-                    'alliance_id' => $member->alliance->id,
-                    'alliance_type' => $member->alliance->alliance_type,
-                    'payment_date' => $member->alliance->payment_date,
-                ]
-                : null,
-        ]);
     }
+
 
     public function index(Request $request)
     {
