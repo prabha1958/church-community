@@ -12,13 +12,7 @@ class SendAnniversaryGreetings extends Command
     protected $signature = 'greetings:anniversary {--date=}';
     protected $description = 'Send WhatsApp wedding anniversary greetings to male members';
 
-    protected WhatsAppSender $whatsapp;
 
-    public function __construct(WhatsAppSender $whatsapp)
-    {
-        parent::__construct();
-        $this->whatsapp = $whatsapp;
-    }
 
     public function handle()
     {
@@ -32,3 +26,4 @@ class SendAnniversaryGreetings extends Command
         return 0;
     }
 }
+

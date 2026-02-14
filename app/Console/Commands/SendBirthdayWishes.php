@@ -21,10 +21,7 @@ class SendBirthdayWishes extends Command
      *
      * Run with: php artisan send:birthday-wishes
      */
-    protected $signature = 'send:birthday-wishes
-                            {--whatsapp : send WhatsApp messages instead of SMS}
-                            {--dry : dry run - do not actually send messages}
-                            {--template= : custom message template (optional)}';
+    protected $signature = 'send:birthday-wishes {--whatsapp : send WhatsApp messages instead of SMS} {--dry : dry run - do not actually send messages} {--template= : custom message template (optional)}';
 
     protected $description = 'Send birthday wishes (email and optional WhatsApp) to members whose birthday is today';
 
@@ -95,19 +92,7 @@ class SendBirthdayWishes extends Command
             }
 
             // 📱 WHATSAPP
-            if ($sendWhatsapp && $toMobile && ! $dry) {
-                try {
-                    $text = $this->buildWhatsappText($member, $templateOption);
-                    $this->sendWhatsAppViaTwilio($toMobile, $text);
-                    $whatsAppSent = true;
-                    $this->info("WhatsApp sent to {$toMobile}");
-                } catch (\Throwable $e) {
-                    Log::error('Birthday WhatsApp failed', [
-                        'member_id' => $member->id,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-            }
+
 
             // 🧾 DB RECORDS — ALWAYS CREATED ONCE
             try {
@@ -170,47 +155,7 @@ class SendBirthdayWishes extends Command
      *
      * Returns array with 'sid' when available.
      */
-    protected function sendWhatsAppViaTwilio(string $toMobile, string $message): array
-    {
-        // Normalize to E.164 if possible (caller should provide a proper number)
-        // Twilio requires 'whatsapp:+<E.164>'
-        $to = $this->normalizeWhatsAppNumber($toMobile);
 
-        $sid = config('services.twilio.sid') ?? env('TWILIO_SID');
-        $token = config('services.twilio.token') ?? env('TWILIO_TOKEN');
-        $from = config('services.twilio.whatsapp_from') ?? env('TWILIO_WHATSAPP_FROM');
-
-        if (! $sid || ! $token || ! $from) {
-            throw new \RuntimeException('Twilio WhatsApp credentials not configured (TWILIO_SID / TWILIO_TOKEN / TWILIO_WHATSAPP_FROM).');
-        }
-
-        // If Twilio SDK is available, use it
-        if (class_exists(\Twilio\Rest\Client::class)) {
-            $client = new \Twilio\Rest\Client($sid, $token);
-            $messageResp = $client->messages->create($to, [
-                'from' => $from,
-                'body' => $message,
-            ]);
-            return ['sid' => $messageResp->sid ?? null];
-        }
-
-        // Fallback HTTP call to Twilio API
-        $url = "https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json";
-
-        $response = Http::withBasicAuth($sid, $token)
-            ->asForm()
-            ->post($url, [
-                'From' => $from,
-                'To'   => $to,
-                'Body' => $message,
-            ]);
-
-
-
-
-
-        return ['sid' => $json['sid'] ?? null];
-    }
 
     /**
      * Normalize a raw mobile number to Twilio WhatsApp format: 'whatsapp:+<E.164>'.
@@ -238,3 +183,4 @@ class SendBirthdayWishes extends Command
         return 'whatsapp:+' . $digits;
     }
 }
+

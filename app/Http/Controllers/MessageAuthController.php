@@ -34,16 +34,19 @@ class MessageAuthController extends Controller
             }
 
             $token = $member->createToken('mobile')->plainTextToken;
+              
+	    $alliance = $member->alliance;
 
-            $member->load([
-                'alliance:id,member_id,alliance_type,payment_date'
-            ]);
+	    Log::info($alliance);
+                  
+               return response()->json([
+    'success' => true,
+    'token' => $token,
+    'member' => $member,
+    'alliance' => $member->alliance ?? null,
+]);
 
-            return response()->json([
-                'token' => $token,
-                'member' => $member,
-                'alliance' => $member->alliance,
-            ]);
+	   
         } catch (\Throwable $e) {
             Log::error("LOGIN ERROR", [
                 'message' => $e->getMessage(),
