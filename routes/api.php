@@ -129,7 +129,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
 
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/pastors', [PastorController::class, 'index'])->name('pastors_list');
+    Route::get('/pastors', [PastorController::class, 'index'])->name('pastors_list_app');
     Route::get('/pastors/{pastor}', [PastorController::class, 'show']);
     Route::post('/pastors', [PastorateComMember::class, 'store']);
 });
