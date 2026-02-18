@@ -23,9 +23,11 @@ class SubscriptionController extends Controller
                 'id' => $member->id,
                 'name' => trim($member->first_name . ' ' . $member->last_name),
                 'membership_fee' => $member->membership_fee,
+
             ],
             'subscription' => $sub,
             'months' => Subscription::fyMonths(),
+            'fy' => $fy
         ]);
     }
 }
