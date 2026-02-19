@@ -32,6 +32,17 @@ class SendBirthdayWishes extends Command
         $day = $today->day;
         $year = $today->year;
 
+        Log::info("command run");
+
+        DB::table('system_runs')->updateOrInsert(
+            ['type' => 'birthday'],
+            [
+                'last_run_at' => now(),
+                'status' => 'ran',
+                'updated_at' => now(),
+            ]
+        );
+
 
         $this->info("Looking up members with birthday on {$today->toDateString()}");
 
@@ -45,9 +56,17 @@ class SendBirthdayWishes extends Command
         $this->info("Found {$count} member(s).");
 
         if ($count === 0) {
+            DB::table('system_runs')->updateOrInsert(
+                ['type' => 'birthday'],
+                [
+                    'last_run_at' => now(),
+                    'status' => 'no_birthdays',
+                    'updated_at' => now(),
+                ]
+            );
+
             return 0;
         }
-
 
 
 
@@ -183,4 +202,3 @@ class SendBirthdayWishes extends Command
         return 'whatsapp:+' . $digits;
     }
 }
-

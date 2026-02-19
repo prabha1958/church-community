@@ -38,6 +38,7 @@ class BirthdayGreetingService
 
             $this->log('birthday', "🎂 Found {$members->count()} member(s)");
 
+
             foreach ($members as $member) {
 
                 $alreadySent = BirthdayGreeting::where('member_id', $member->id)
@@ -73,10 +74,6 @@ class BirthdayGreetingService
                 ]);
             }
 
-            DB::table('system_runs')->updateOrInsert(
-                ['type' => 'birthday'],
-                ['last_run_at' => now(), 'status' => 'success']
-            );
 
             DB::table('system_runs')->updateOrInsert(
                 ['type' => 'birthday'],
