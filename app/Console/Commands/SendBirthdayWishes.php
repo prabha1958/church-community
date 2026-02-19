@@ -34,14 +34,6 @@ class SendBirthdayWishes extends Command
 
         Log::info("command run");
 
-        DB::table('system_runs')->updateOrInsert(
-            ['type' => 'birthday'],
-            [
-                'last_run_at' => now(),
-                'status' => 'ran',
-                'updated_at' => now(),
-            ]
-        );
 
 
         $this->info("Looking up members with birthday on {$today->toDateString()}");
@@ -60,7 +52,7 @@ class SendBirthdayWishes extends Command
                 ['type' => 'birthday'],
                 [
                     'last_run_at' => now(),
-                    'status' => 'no_birthdays',
+                    'status' => 'failed',
                     'updated_at' => now(),
                 ]
             );
