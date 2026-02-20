@@ -22,7 +22,7 @@ class PoorFeedingController extends Controller
     {
         $perPage = (int) $request->query('per_page', 15);
 
-        $query = PoorFeeding::with('sponsor')->orderByDesc('date_of_event');
+        $query = PoorFeeding::with('sponsor')->orderByDesc('id');
 
         // optional filters
 
