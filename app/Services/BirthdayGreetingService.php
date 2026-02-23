@@ -32,6 +32,8 @@ class BirthdayGreetingService
 
             $this->log('birthday', "🔍 Verifying birthdays for {$today->toDateString()}");
 
+
+
             $members = Member::whereMonth('date_of_birth', $today->month)
                 ->whereDay('date_of_birth', $today->day)
                 ->get();

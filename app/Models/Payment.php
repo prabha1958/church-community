@@ -16,7 +16,8 @@ class Payment extends Model
         'status',
         'payment_mode',
         'reference_no',
-        'raw'
+        'raw',
+        'admin_id'
     ];
 
     protected $casts = [

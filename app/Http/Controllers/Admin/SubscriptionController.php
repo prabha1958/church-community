@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Services\AdminActionLogger;
 use App\Services\SubscriptionReceiptService;
 use App\Models\Message;
+use Illuminate\Support\Facades\Auth;
 
 
 class SubscriptionController extends Controller
@@ -357,7 +358,7 @@ class SubscriptionController extends Controller
         $amount = count($data['months']) * $sub->monthly_fee;
 
         DB::transaction(function () use ($member, $sub, $data, $amount) {
-
+            $user = Auth::user();
             $payment = Payment::create([
                 'member_id'       => $member->id,
                 'subscription_id' => $sub->id,
@@ -366,6 +367,7 @@ class SubscriptionController extends Controller
                 'payment_mode'    => $data['payment_mode'],
                 'reference_no'    => $data['reference_no'],
                 'raw'             => ['months' => $data['months']],
+                'admin_id'        => $user->id
             ]);
 
 
@@ -411,6 +413,53 @@ class SubscriptionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Offline payment recorded successfully',
+        ]);
+    }
+
+
+    public function dailyReport(Request $request)
+    {
+        $date = $request->input('date', now()->toDateString());
+
+        $user = Auth::user();
+        $adminId = $user->id;
+
+        $payments = Payment::with('member')
+            ->where('admin_id', $adminId)
+            ->whereDate('created_at', $date)
+            ->orderBy('created_at')
+            ->get();
+
+        // Format detailed list
+        $paymentList = $payments->map(function ($payment) {
+            return [
+                'payment_id' => $payment->id,
+                'member_id' => $payment->member_id,
+                'member_name' =>
+                optional($payment->member)->family_name . ' ' .
+                    optional($payment->member)->first_name . ' ' .
+                    optional($payment->member)->last_name,
+
+                'payment_date' => $payment->created_at->format('d-m-Y H:i'),
+                'amount' => $payment->amount,
+                'payment_mode' => $payment->payment_mode,
+                'reference_no' => $payment->reference_no,
+            ];
+        });
+
+        $totalAmount = $payments->sum('amount');
+
+        $modeTotals = $payments->groupBy('payment_mode')
+            ->map(fn($items) => $items->sum('amount'));
+
+        return response()->json([
+            'date' => $date,
+            'admin_id' => $adminId,
+            'admin_name' => $user->first_name,
+            'total_transactions' => $payments->count(),
+            'total_amount' => $totalAmount,
+            'mode_totals' => $modeTotals,
+            'payments' => $paymentList,
         ]);
     }
 }

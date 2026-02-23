@@ -62,6 +62,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('subscriptions/{member}/pay-offline', [AdminSubscriptionController::class, 'payOffline']);
     Route::post('subscriptions/{member}/create', [AdminSubscriptionController::class, 'createSubscription']);
     Route::get('subscriptions/{member}/due', [AdminSubscriptionController::class, 'due']);
+    Route::get('subscriptions/daily-report', [AdminSubscriptionController::class, 'dailyReport']);
     Route::get('subscriptions', [AdminSubscriptionController::class, 'index']);
     Route::get('subscriptions/{member}', [AdminSubscriptionController::class, 'show']);
     Route::post('subscriptions/verify-payment', [AdminSubscriptionController::class, 'verifyPayment']);
@@ -197,7 +198,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::patch('poor-feedings/{pfeeding}/show', [AdminPoorFeedingController::class, 'display']);
 
     // optional remove one photo endpoint
-    Route::delete('poor-feedings/{poorFeedings}/photo', [AdminPoorFeedingController::class, 'removePhoto']);
+    Route::delete('poor-feedings/{poorFeeding}/photo', [AdminPoorFeedingController::class, 'removePhoto']);
 });
 
 

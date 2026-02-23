@@ -140,7 +140,7 @@ class PoorFeedingController extends Controller
         $poorFeeding->event_photos = array_values($new);
         $poorFeeding->save();
 
-        $poorFeeding->event_photos = array_map(fn($p) => $p ? Storage::url($p) : null, $poorFeeding->event_photos ?? []);
+
 
         return response()->json(['success' => true, 'data' => $poorFeeding]);
     }
