@@ -455,7 +455,7 @@ class SubscriptionController extends Controller
         return response()->json([
             'date' => $date,
             'admin_id' => $adminId,
-            'admin_name' => $user->first_name,
+            'admin_name' => $user->first_name . " " . $user->last_name,
             'total_transactions' => $payments->count(),
             'total_amount' => $totalAmount,
             'mode_totals' => $modeTotals,

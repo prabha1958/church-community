@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\DeviceToken;
 use App\Services\ExpoPushService;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 
 
 class MessageController extends Controller
@@ -124,6 +125,7 @@ class MessageController extends Controller
 
         $message->update([
             'is_published' => 1,
+            'published_at' => now()
 
         ]);
 
