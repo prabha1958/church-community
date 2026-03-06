@@ -44,6 +44,10 @@ return [
         'token' => env('TWILIO_TOKEN'),
         'from' => env('TWILIO_FROM'),
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM')
-    ]
+    ],
+
+    'fcm' => [
+        'project_id' => env('FCM_PROJECT_ID'),
+    ],
 
 ];

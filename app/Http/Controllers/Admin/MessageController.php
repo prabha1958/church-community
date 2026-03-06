@@ -9,6 +9,7 @@ use App\Models\DeviceToken;
 use App\Services\ExpoPushService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
+use App\Services\FcmService;
 
 
 class MessageController extends Controller
@@ -51,7 +52,17 @@ class MessageController extends Controller
 
         $tokens = DeviceToken::pluck('token')->toArray();
 
-        ExpoPushService::send(
+        //   ExpoPushService::send(
+        //     $tokens,
+        //      $message->title,
+        //     Str::limit($message->body, 80),
+        //     [
+        //       'type' => 'message',
+        //       'message_id' => $message->id,
+        //    ]
+        //  );
+
+        FcmService::send(
             $tokens,
             $message->title,
             Str::limit($message->body, 80),
