@@ -52,17 +52,7 @@ class MessageController extends Controller
 
         $tokens = DeviceToken::pluck('token')->toArray();
 
-        //   ExpoPushService::send(
-        //     $tokens,
-        //      $message->title,
-        //     Str::limit($message->body, 80),
-        //     [
-        //       'type' => 'message',
-        //       'message_id' => $message->id,
-        //    ]
-        //  );
-
-        FcmService::send(
+        ExpoPushService::send(
             $tokens,
             $message->title,
             Str::limit($message->body, 80),
@@ -71,6 +61,8 @@ class MessageController extends Controller
                 'message_id' => $message->id,
             ]
         );
+
+
 
         return response()->json(['success' => true]);
     }
