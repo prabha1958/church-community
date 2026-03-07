@@ -58,7 +58,7 @@ class MessageController extends Controller
             Str::limit($message->body, 80),
             [
                 'type' => 'message',
-                'message_id' => $message->id,
+                'id' => $message->id,
             ]
         );
 
