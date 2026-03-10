@@ -27,6 +27,9 @@ use App\Http\Controllers\AdminGreetingController;
 use App\Http\Controllers\PastorController;
 use App\Models\PastorateComMember;
 use App\Http\Controllers\EventController;
+use App\Models\DeviceToken;
+use Illuminate\Support\Facades\Http;
+
 
 //authentication
 
@@ -219,3 +222,25 @@ Route::get('admin/greetings/birthday/logs', [AdminGreetingController::class, 'lo
 
 Route::post('admin/greetings/anniversary/run', [AdminGreetingController::class, 'runAnniversary']);
 Route::get('admin/greetings/anniversary/logs', [AdminGreetingController::class, 'annlogs']);
+
+
+Route::get('/test-push', function () {
+
+    $token = DeviceToken::first()->token;
+
+    $response = Http::withHeaders([
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'Authorization' => 'Bearer ' . env('EXPO_ACCESS_TOKEN')
+    ])
+        ->post('https://exp.host/--/api/v2/push/send', [
+            'to' => $token,
+            'title' => 'Test Notification',
+            'body' => 'Push test working',
+            'data' => [
+                'message_id' => 1
+            ]
+        ]);
+
+    return $response->json();
+});
