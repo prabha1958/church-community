@@ -231,16 +231,15 @@ Route::get('/test-push', function () {
     $response = Http::withHeaders([
         'Accept' => 'application/json',
         'Content-Type' => 'application/json',
-        'Authorization' => 'Bearer ' . env('EXPO_ACCESS_TOKEN')
-    ])
-        ->post('https://exp.host/--/api/v2/push/send', [
-            'to' => $token,
-            'title' => 'Test Notification',
-            'body' => 'Push test working',
-            'data' => [
-                'message_id' => 1
-            ]
-        ]);
+        'Authorization' => 'Bearer ' . env('EXPO_ACCESS_TOKEN'),
+    ])->post('https://exp.host/--/api/v2/push/send', [
+        'to' => $token,
+        'title' => 'Test Notification',
+        'body' => 'Push test',
+        'data' => [
+            'message_id' => 1
+        ]
+    ]);
 
     return $response->json();
 });
