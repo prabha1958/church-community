@@ -66,14 +66,32 @@ class BirthdayGreetingService
                     'whatsapp_sent' => false,
                 ]);
 
-                Message::create([
+                $greetings = "Happy Birthday " . $member->first_name . "XYZ Church wishes you a very Happy Birthday . and may GOD bless you in your life";
+
+                $message = Message::create([
                     'member_id' => $member->id,
                     'title' => 'Happy Birthday 🎉',
-                    'body' => "Happy Birthday {$member->first_name}!",
+                    'body' => $greetings,
                     'message_type' => 'birthday',
                     'image_path' => $member->profile_photo,
                     'is_published' => 1,
+                    'published_at' => now()
                 ]);
+
+                $tokens = DB::table('device_tokens')
+                    ->where('member_id', $member->id)
+                    ->pluck('token')
+                    ->toArray();
+
+                ExpoPushService::send(
+                    $tokens,
+                    $message->title,
+                    $message->body,
+                    [
+                        'type' => 'birthday',
+                        'message_id' => $message->id
+                    ]
+                );
             }
 
 

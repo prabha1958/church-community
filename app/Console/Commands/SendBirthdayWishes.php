@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use App\Models\BirthdayGreeting;
 use App\Models\Message;
 use Illuminate\Support\Facades\DB;
+use App\Services\ExpoPushService;
 
 
 class SendBirthdayWishes extends Command
@@ -117,7 +118,7 @@ class SendBirthdayWishes extends Command
 
                 $imagePath = $member->getRawOriginal('profile_photo');
 
-                Message::create([
+                $message = Message::create([
                     'member_id' => $member->id,
                     'image_path' => $imagePath,
                     'title' => 'Happy Birthday 🎉',
@@ -126,6 +127,21 @@ class SendBirthdayWishes extends Command
                     'is_published' => 1,
                     'published_at' => now(),
                 ]);
+
+                $tokens = DB::table('device_tokens')
+                    ->where('member_id', $member->id)
+                    ->pluck('token')
+                    ->toArray();
+
+                ExpoPushService::send(
+                    $tokens,
+                    $message->title,
+                    $message->body,
+                    [
+                        'type' => 'birthday',
+                        'message_id' => $message->id
+                    ]
+                );
 
                 DB::table('system_runs')->updateOrInsert(
                     ['type' => 'birthday'],

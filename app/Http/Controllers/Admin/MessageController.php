@@ -69,7 +69,7 @@ class MessageController extends Controller
 
     public function index()
     {
-        $data = Message::orderBy('id', 'desc')->get();
+        $data = Message::where('message_type', '=', 'general')->orderBy('id', 'desc')->get();
 
         return response()->json([
             'success' => true,
@@ -149,5 +149,13 @@ class MessageController extends Controller
 
 
         return response()->json(['success' => true]);
+    }
+
+    public function show(Message $message)
+    {
+
+        return response()->json([
+            'data' => $message
+        ]);
     }
 }

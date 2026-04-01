@@ -23,7 +23,7 @@ class MemberController extends Controller
     {
         $data = $request->validated();
 
-
+        Log::info("Controller reached");
 
         // handle profile photo if your app uses it
         if ($request->hasFile('profile_photo')) {

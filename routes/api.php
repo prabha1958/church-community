@@ -29,6 +29,7 @@ use App\Models\PastorateComMember;
 use App\Http\Controllers\EventController;
 use App\Models\DeviceToken;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 
 //authentication
@@ -95,12 +96,15 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::put('/messages/{message}/update', [AdminMessageController::class, 'update']);
     Route::patch('messages/{message}/show', [AdminMessageController::class, 'display']);
     Route::patch('messages/{message}/hide', [AdminMessageController::class, 'hide']);
+    Route::get('/messages/{message}',  [AdminMessageController::class, 'show']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/messages', [MessageAuthController::class, 'index']);
     Route::get('/messages/{message}', [MessageAuthController::class, 'show']);
 });
+
+
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/subscriptions/{member}', [SubscriptionController::class, 'show']);
@@ -223,23 +227,6 @@ Route::get('admin/greetings/birthday/logs', [AdminGreetingController::class, 'lo
 Route::post('admin/greetings/anniversary/run', [AdminGreetingController::class, 'runAnniversary']);
 Route::get('admin/greetings/anniversary/logs', [AdminGreetingController::class, 'annlogs']);
 
-
-Route::get('/test-push', function () {
-
-    $token = DeviceToken::first()->token;
-
-    $response = Http::withHeaders([
-        'Accept' => 'application/json',
-        'Content-Type' => 'application/json',
-        'Authorization' => 'Bearer ' . env('EXPO_ACCESS_TOKEN'),
-    ])->post('https://exp.host/--/api/v2/push/send', [
-        'to' => $token,
-        'title' => 'Test Notification',
-        'body' => 'Push test',
-        'data' => [
-            'message_id' => 1
-        ]
-    ]);
-
-    return $response->json();
+Route::get('/ping', function () {
+    return response()->json(['message' => 'API OK']);
 });

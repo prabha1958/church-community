@@ -20,6 +20,8 @@ use App\Services\AdminActionLogger;
 use App\Services\SubscriptionReceiptService;
 use App\Models\Message;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ExpoPushService;
+use Illuminate\Support\Str;
 
 
 class SubscriptionController extends Controller
@@ -60,6 +62,7 @@ class SubscriptionController extends Controller
         return response()->json([
             'success' => true,
             'months' => $sub->monthStatus(),
+            'member' => $member,
             'due_amount' => $dueAmount,
             'subscription' => $sub
         ]);
@@ -393,7 +396,7 @@ class SubscriptionController extends Controller
 
         Log::info($receiptPath);
 
-        Message::create([
+        $message = Message::create([
             'member_id' => $payment->member_id,
             'title' => 'Subscription Payment Receipt',
             'body' => 'Your subscription payment has been received. Please find the receipt attached.',
@@ -402,6 +405,24 @@ class SubscriptionController extends Controller
             'is_published' => 1,
             'published_at' => now(),
         ]);
+
+        // 🔔 SEND PUSH NOTIFICATION TO THIS MEMBER ONLY
+        $tokens = \App\Models\DeviceToken::where('member_id', $member->id)
+            ->pluck('token')
+            ->toArray();
+
+        if (!empty($tokens)) {
+            ExpoPushService::send(
+                $tokens,
+                $message->title,
+                Str::limit($message->body, 80),
+                [
+                    'type' => 'message',
+                    'id' => $message->id,
+
+                ]
+            );
+        }
 
         AdminActionLogger::log(
             action: 'Subscription.offline_pay',

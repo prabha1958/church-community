@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\AnniversaryWishMail;
+use Illuminate\Support\Str;
 
 class AnniversaryGreetingService
 {
@@ -102,7 +103,7 @@ class AnniversaryGreetingService
                 ]);
 
                 // 📬 Message inbox entry
-                Message::create([
+                $message = Message::create([
                     'member_id' => $member->id,
                     'title' => 'Happy Wedding Anniversary 🎉',
                     'body' => $messageText,
@@ -111,6 +112,21 @@ class AnniversaryGreetingService
                     'is_published' => 1,
                     'published_at' => now(),
                 ]);
+
+                $tokens = DB::table('device_tokens')
+                    ->where('member_id', $member->id)
+                    ->pluck('token')
+                    ->toArray();
+
+                ExpoPushService::send(
+                    $tokens,
+                    $message->title,
+                    Str::limit($message->body, 80),
+                    [
+                        'type' => 'message',
+                        'id' => $message->id,
+                    ]
+                );
             }
 
             DB::table('system_runs')->updateOrInsert(

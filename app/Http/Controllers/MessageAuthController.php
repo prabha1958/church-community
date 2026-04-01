@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Member;
 use App\Models\Message;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class MessageAuthController extends Controller
 {
@@ -34,19 +35,17 @@ class MessageAuthController extends Controller
             }
 
             $token = $member->createToken('mobile')->plainTextToken;
-              
-	    $alliance = $member->alliance;
 
-	    Log::info($alliance);
-                  
-               return response()->json([
-    'success' => true,
-    'token' => $token,
-    'member' => $member,
-    'alliance' => $member->alliance ?? null,
-]);
+            $alliance = $member->alliance;
 
-	   
+            Log::info($alliance);
+
+            return response()->json([
+                'success' => true,
+                'token' => $token,
+                'member' => $member,
+                'alliance' => $member->alliance ?? null,
+            ]);
         } catch (\Throwable $e) {
             Log::error("LOGIN ERROR", [
                 'message' => $e->getMessage(),
@@ -62,7 +61,8 @@ class MessageAuthController extends Controller
 
     public function index(Request $request)
     {
-        $member = $request->user(); // authenticated member (Sanctum)
+
+        $member = Auth::user(); // authenticated member (Sanctum)
 
         $messages = Message::query()
             ->where('is_published', 1)
@@ -71,9 +71,12 @@ class MessageAuthController extends Controller
                     ->orWhere('member_id', $member->id); // personal messages
             })
             ->orderByDesc('published_at')
-            ->paginate(20);
+            ->limit(50)
+            ->get();
 
-        return response()->json($messages);
+        return response()->json([
+            'data' => $messages
+        ]);
     }
 
     public function show(Message $message, Request $request)
