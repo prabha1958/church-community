@@ -56,14 +56,30 @@ class SubscriptionController extends Controller
     public function due(Request $request, Member $member)
     {
         $fy = Subscription::financialYearForDate();
-        $sub = Subscription::firstOrCreate(['member_id' => $member->id, 'financial_year' => $fy], ['monthly_fee' => $member->membership_fee]);
+
+        $sub = Subscription::firstOrCreate(
+            ['member_id' => $member->id, 'financial_year' => $fy],
+            ['monthly_fee' => $member->membership_fee]
+        );
+
+        $months = $sub->monthStatus();
         $unpaid = $sub->unpaidMonthsUpTo(Carbon::now());
+
         $dueAmount = count($unpaid) * $sub->monthly_fee;
+
+        // Calculate paid months
+        $paidMonths = collect($months)
+            ->where('paid', true)
+            ->count();
+
+        $paidAmount = $paidMonths * $sub->monthly_fee;
+
         return response()->json([
             'success' => true,
-            'months' => $sub->monthStatus(),
+            'months' => $months,
             'member' => $member,
             'due_amount' => $dueAmount,
+            'paid_amount' => $paidAmount,
             'subscription' => $sub
         ]);
     }
@@ -445,22 +461,23 @@ class SubscriptionController extends Controller
         $user = Auth::user();
         $adminId = $user->id;
 
+        // -------------------------
+        // MEMBER PAYMENTS
+        // -------------------------
         $payments = Payment::with('member')
             ->where('admin_id', $adminId)
             ->whereDate('created_at', $date)
-            ->orderBy('created_at')
             ->get();
 
-        // Format detailed list
-        $paymentList = $payments->map(function ($payment) {
+        $memberPayments = $payments->map(function ($payment) {
             return [
-                'payment_id' => $payment->id,
+                'payment_id' => 'M-' . $payment->id,
+                'type' => 'member',
                 'member_id' => $payment->member_id,
                 'member_name' =>
                 optional($payment->member)->family_name . ' ' .
                     optional($payment->member)->first_name . ' ' .
                     optional($payment->member)->last_name,
-
                 'payment_date' => $payment->created_at->format('d-m-Y H:i'),
                 'amount' => $payment->amount,
                 'payment_mode' => $payment->payment_mode,
@@ -468,19 +485,61 @@ class SubscriptionController extends Controller
             ];
         });
 
-        $totalAmount = $payments->sum('amount');
+        // -------------------------
+        // ALLIANCE PAYMENTS
+        // -------------------------
+        $alliancePayments = \App\Models\AlliancePayment::with('alliance')
+            ->where('admin_id', $adminId)
+            ->whereDate('created_at', $date)
+            ->get();
 
-        $modeTotals = $payments->groupBy('payment_mode')
+        $alliancePaymentList = $alliancePayments->map(function ($payment) {
+            return [
+                'payment_id' => 'A-' . $payment->id,
+                'type' => 'alliance',
+                'member_id' => optional($payment->alliance)->member_id,
+                'member_name' =>
+                optional($payment->alliance)->family_name . ' ' .
+                    optional($payment->alliance)->first_name . ' ' .
+                    optional($payment->alliance)->last_name,
+
+                'payment_date' => $payment->created_at->format('d-m-Y H:i'),
+                'amount' => $payment->amount,
+
+                // ✅ FIX HERE
+                'payment_mode' => $payment->raw['payment_mode'] ?? 'other',
+
+                'reference_no' => $payment->raw['reference_no'] ?? '',
+            ];
+        });
+
+        // -------------------------
+        // MERGE BOTH
+        // -------------------------
+        $allPayments = $memberPayments
+            ->merge($alliancePaymentList)
+            ->sortBy('payment_date')
+            ->values();
+
+        // -------------------------
+        // TOTALS
+        // -------------------------
+        $totalAmount = $allPayments->sum('amount');
+
+        $modeTotals = $allPayments
+            ->groupBy(function ($item) {
+                return strtolower($item['payment_mode'] ?? 'other');
+            })
             ->map(fn($items) => $items->sum('amount'));
 
         return response()->json([
             'date' => $date,
             'admin_id' => $adminId,
             'admin_name' => $user->first_name . " " . $user->last_name,
-            'total_transactions' => $payments->count(),
+            'total_transactions' => $allPayments->count(),
             'total_amount' => $totalAmount,
             'mode_totals' => $modeTotals,
-            'payments' => $paymentList,
+            'payments' => $allPayments,
         ]);
     }
 }

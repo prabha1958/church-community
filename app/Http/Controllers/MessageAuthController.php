@@ -12,10 +12,7 @@ class MessageAuthController extends Controller
 {
     public function login(Request $request)
     {
-        Log::info('LOGIN HIT', [
-            'method' => $request->method(),
-            'payload' => $request->all(),
-        ]);
+
 
         try {
 

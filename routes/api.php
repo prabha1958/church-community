@@ -177,6 +177,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::post('events', [AdminEventController::class, 'store'])->name('admin.events.store');
     Route::get('events', [AdminEventController::class, 'index'])->name('admin.events');
+    Route::get('events/{event}/show', [AdminEventController::class, 'show'])->name('admin.eventshow');
     Route::patch('events/{event}', [AdminEventController::class, 'update'])->name('admin.events.update');
     Route::patch('events/{event}/hide', [AdminEventController::class, 'hide']);
     Route::patch('events/{event}/show', [AdminEventController::class, 'display']);

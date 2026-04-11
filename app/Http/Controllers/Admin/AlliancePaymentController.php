@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Mail\AllianceReceiptMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
+
 
 class AlliancePaymentController extends Controller
 {
@@ -194,7 +196,7 @@ class AlliancePaymentController extends Controller
 
     public function payOffline(Request $request, Alliance $alliance)
     {
-        $user = $request->user();
+        $user = Auth::user();
 
         if ($user->id !== $alliance->member_id && ($user->role ?? '') !== 'admin') {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -208,9 +210,12 @@ class AlliancePaymentController extends Controller
 
         $payment = DB::transaction(function () use ($alliance, $data) {
 
+            $user = Auth::user();
+
             $payment = AlliancePayment::create([
                 'alliance_id' => $alliance->id,
                 'member_id'   => $alliance->member_id,
+                'admin_id' => $user->id,
                 'payment_gateway' => 'offline',
                 'amount' => $data['amount'],
                 'currency' => 'INR',

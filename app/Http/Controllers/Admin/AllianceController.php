@@ -103,7 +103,7 @@ class AllianceController extends Controller
     public function index(Request $request)
     {
         $alliances = Alliance::query()
-            ->with(['member:id,first_name,last_name'])
+            ->with(['member:id,first_name,last_name,email,mobile_number'])
             ->when($request->filled('search'), function ($q) use ($request) {
                 $s = $request->search;
 
@@ -128,6 +128,8 @@ class AllianceController extends Controller
                     'member_name'   => optional($a->member)
                         ? $a->member->first_name . ' ' . $a->member->last_name
                         : null,
+                    'member_email' => $a->member->email,
+                    'member_mobile' => $a->member->mobile_number,
                     'is_published'  => (bool) $a->is_published,
                     'payment_id'    => $a->payment_id,
                     'amount'        => $a->amount,

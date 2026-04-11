@@ -58,6 +58,7 @@ class EventController extends Controller
         }
 
         $data['event_photos'] = $photos;
+        $data['published'] = false;
 
         $event = Event::create($data);
 
@@ -117,19 +118,6 @@ class EventController extends Controller
 
 
 
-        $tokens = DeviceToken::pluck('token')->toArray();
-
-        ExpoPushService::send(
-            $tokens,
-            $event->name_of_event,
-            Str::limit($event->description, 80),
-            [
-                'type' => 'message',
-                'message_id' => $event->id,
-
-            ]
-        );
-
 
         return response()->json(['success' => true]);
     }
@@ -159,7 +147,7 @@ class EventController extends Controller
             Str::limit($event->description, 80),
             [
                 'type' => 'message',
-                'message_id' => $event->id,
+                'id' => $event->id,
 
             ]
         );
