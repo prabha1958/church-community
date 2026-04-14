@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateMemberRequest extends FormRequest
 {
@@ -15,27 +16,30 @@ class UpdateMemberRequest extends FormRequest
         $memberId = $this->route('member')?->id;
 
         return [
-            'family_name'         => ['nullable', 'string', 'max:255'],
-            'first_name'          => ['nullable', 'string', 'max:255'],
+            'family_name'         => ['required', 'string', 'max:255'],
+            'first_name'          => ['required', 'string', 'max:255'],
+            'middle_name'         => ['nullable', 'string', 'max:255'],
             'last_name'           => ['nullable', 'string', 'max:255'],
-            'date_of_birth'       => ['nullable', 'date'],
-            'wedding_date'        => ['nullable', 'date'],
-
-            // NEW fields
-            'spouse_name'         => ['nullable', 'string', 'max:255'],
-            'gender'              => ['nullable', 'in:male,female,other'],
-            'status_flag'         => ['required', 'boolean'],
-
-
-            // file/photo if present in your app
-            'profile_photo'       => ['nullable', 'image', 'max:5120'],
             'couple_pic' => ['nullable', 'file', 'image', 'max:2048'],
+            'date_of_birth'       => ['required', 'date'],
+            'wedding_date'       => ['nullable', 'date'],
+            'area_no'       => ['required', 'string', 'max:2'],
+
+            'gender'              => ['required', 'string', 'max:255'],
+            'spouse_name'         =>  ['nullable', 'string', 'max:255'],
+            'occupation'          => ['nullable', 'string', 'max:255'],
+            'status'              => ['required', Rule::in(['in_service', 'retired', 'other'])],
+            'profile_photo'       => ['nullable', 'file', 'image', 'max:2048'],
+            'membership_fee'      => ['nullable', 'numeric', 'min:0'],
             'address_flat_number' => ['nullable', 'string', 'max:255'],
             'address_premises'    => ['nullable', 'string', 'max:255'],
             'address_area'        => ['nullable', 'string', 'max:255'],
             'address_landmark'    => ['nullable', 'string', 'max:255'],
             'address_city'        => ['nullable', 'string', 'max:255'],
             'address_pin'         => ['nullable', 'digits:6'],
+
+
+
         ];
     }
 

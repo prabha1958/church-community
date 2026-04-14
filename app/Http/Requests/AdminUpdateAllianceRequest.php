@@ -47,7 +47,7 @@ class AdminUpdateAllianceRequest extends FormRequest
             'photo2' => 'nullable|image|max:5120',
             'photo3' => 'nullable|image|max:5120',
 
-            'is_published' => 'sometimes|boolean',
+
         ];
     }
 }

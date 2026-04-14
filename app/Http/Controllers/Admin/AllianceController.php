@@ -170,7 +170,7 @@ class AllianceController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Alliance updated successfully',
-            'data' => $alliance->fresh(),
+
         ]);
     }
 
