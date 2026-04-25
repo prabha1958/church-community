@@ -45,9 +45,9 @@ Route::post('otp/verify', [OtpAuthController::class, 'verify'])
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('members', [AdminMemberController::class, 'index'])->name('members.index');
-    Route::get('members/{member}', [AdminMemberController::class, 'show'])->name('members.show');
-    Route::put('members/{member}', [AdminMemberController::class, 'update'])->name('members.update');
-    Route::patch('members/{member}', [AdminMemberController::class, 'update']);
+    Route::get('members/{member}', [AdminMemberController::class, 'show'])->name('members.show')->whereNumber('member');
+    // Route::put('members/{member}', [AdminMemberController::class, 'update'])->name('members.update')->whereNumber('member');
+    Route::patch('members/{member}', [AdminMemberController::class, 'update'])->whereNumber('member');
     Route::delete('members/{member}/deactivate', [AdminMemberController::class, 'deactivate'])->name('members.destroy');
     Route::post('members', [AdminMemberController::class, 'store'])->name('members.store');
     Route::patch('members/{member}/email', [AdminMemberController::class, 'updateEmail'])->name('members.updateEmail');
@@ -56,7 +56,17 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->name('admin.')->g
 
 Route::middleware('auth:sanctum')->get('/member', function (Request $request) {
     return $request->user();
-});
+})->whereNumber('member');
+
+Route::middleware('auth:sanctum')->get(
+    '/member/session',
+    [MemberSessionController::class, 'show']
+);
+
+Route::middleware('auth:sanctum')->patch('/member/{member}', [MemberController::class, 'update']);
+Route::middleware('auth:sanctum')->get('/member/{member}', [MemberController::class, 'show']);
+Route::middleware('auth:sanctum')->patch('members/{member}/email', [MemberController::class, 'updateEmail']);
+Route::middleware('auth:sanctum')->patch('members/{member}/mobile', [MemberController::class, 'updateMobile']);
 
 
 //admin subscription routes
@@ -87,6 +97,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 Route::middleware('auth:sanctum')->get('alliances', [AllianceController::class, 'index']);
 Route::middleware('auth:sanctum')->get('alliances/{alliance}', [AllianceController::class, 'show']);
 
+
+
+
 // messages
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
@@ -98,6 +111,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::patch('messages/{message}/hide', [AdminMessageController::class, 'hide']);
     Route::get('/messages/{message}',  [AdminMessageController::class, 'show']);
 });
+
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/messages', [MessageAuthController::class, 'index']);
@@ -145,10 +159,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 //session
 
-Route::middleware('auth:sanctum')->get(
-    '/member/session',
-    [MemberSessionController::class, 'show']
-);
 
 // Announcments
 

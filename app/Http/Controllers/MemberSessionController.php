@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MemberSessionController extends Controller
 {
     public function show(Request $request)
     {
         $member = $request->user(); // sanctum user
+
+        Log::info("SESSION ROUTE HIT");
 
         // load alliance if exists
         $member->load([

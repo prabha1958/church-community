@@ -111,7 +111,7 @@ class MemberController extends Controller
     public function update(UpdateMemberRequest $request, Member $member)
     {
 
-        Log::info('FILES', $request->allFiles());
+
         $data = $request->validated();
 
 
