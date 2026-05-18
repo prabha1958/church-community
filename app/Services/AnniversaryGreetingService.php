@@ -170,10 +170,11 @@ class AnniversaryGreetingService
         $spouse = $member->spouse_name ?: 'your beloved spouse';
 
         return <<<MSG
-            🎉 Happy Wedding Anniversary, {$name}! 🎉
+            🎉 Happy Wedding Anniversary, Mr/Mrs {$name}! 🎉
 
-            May God Allmighty with His divine power and grace make your bond with </br>
-            {$spouse} stronger and make it last for ever, wishing you both a </br>
+            May God Allmighty with His divine power and grace make your bond with
+            {$spouse} stronger and make it last for ever, wishing you both a
+
             A HAPPY ANNIVERSARY
 
             God bless you.

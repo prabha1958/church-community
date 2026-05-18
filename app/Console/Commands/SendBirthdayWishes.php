@@ -184,9 +184,9 @@ class SendBirthdayWishes extends Command
 
 
         return <<<MSG
-            🎉 Happy Birthday, {$name}! 🎉
+            🎉 Happy Birthday, Mr/Mrs/Ms  {$name}! 🎉
 
-            May the Almighty God shine His light up on you, bless you abundantly </br>
+            May the Almighty God shine His light up on you, bless you abundantly
             guide you in all your ways, on this special day of you and for ever.
 
             HAPPY BIRTHDAY
