@@ -105,7 +105,7 @@ class SendBirthdayWishes extends Command
 
             // 📱 WHATSAPP
 
-
+            $messageText = $this->buildMessage($member);
             // 🧾 DB RECORDS — ALWAYS CREATED ONCE
             try {
                 BirthdayGreeting::create([
@@ -122,7 +122,7 @@ class SendBirthdayWishes extends Command
                     'member_id' => $member->id,
                     'image_path' => $imagePath,
                     'title' => 'Happy Birthday 🎉',
-                    'body' => $this->buildWhatsappText($member, $templateOption),
+                    'body' => $messageText,
                     'message_type' => 'birthday',
                     'is_published' => 1,
                     'published_at' => now(),
@@ -175,6 +175,25 @@ class SendBirthdayWishes extends Command
 
         // Simple replacements: {name}
         return str_replace('{name}', $name, $template);
+    }
+
+    protected function buildMessage(Member $member)
+    {
+        $name = $member->first_name . ' ' . $member->last_name;
+        $name = $name ?: 'Friend';
+
+
+        return <<<MSG
+            🎉 Happy Birthday, {$name}! 🎉
+
+            May the Almighty God shine His light up on you, bless you abundantly </br>
+            guide you in all your ways, on this special day of you and for ever.
+
+            HAPPY BIRTHDAY
+
+            God bless you.
+
+            MSG;
     }
 
     /**
