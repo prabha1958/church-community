@@ -165,15 +165,19 @@ class AnniversaryGreetingService
 
     protected function buildMessage(Member $member): string
     {
-        $name = $member->first_name ?: 'Friend';
+        $name = $member->first_name . ' ' . $member->last_name;
+        $name = $name ?: 'Friend';
         $spouse = $member->spouse_name ?: 'your beloved spouse';
 
         return <<<MSG
             🎉 Happy Wedding Anniversary, {$name}! 🎉
 
-            May God bless your union with {$spouse} with love, peace, and togetherness.
+            May God Allmighty with His divine power and grace make your bond with </br>
+            {$spouse} stronger and make it last for ever, wishing you both a </br>
+            A HAPPY ANNIVERSARY
 
-            — CSI Centenary Wesley Church, Ramkote
+            God bless you.
+
             MSG;
     }
 }
