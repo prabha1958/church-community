@@ -38,7 +38,6 @@ class AnniversaryGreetingService
 
 
             $members = Member::query()
-                ->where('gender', 'male')
                 ->whereNotNull('wedding_date')
                 ->whereMonth('wedding_date', $today->month)
                 ->whereDay('wedding_date', $today->day)
