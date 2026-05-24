@@ -106,6 +106,8 @@ class SendBirthdayWishes extends Command
             // 📱 WHATSAPP
 
             $messageText = $this->buildMessage($member);
+
+
             // 🧾 DB RECORDS — ALWAYS CREATED ONCE
             try {
                 BirthdayGreeting::create([
@@ -181,10 +183,11 @@ class SendBirthdayWishes extends Command
     {
         $name = $member->first_name . ' ' . $member->last_name;
         $name = $name ?: 'Friend';
+        $address = $member->gender === 'male' ? 'Mr' : 'Ms';
 
 
         return <<<MSG
-            🎉 Happy Birthday, Mr/Mrs/Ms  {$name}! 🎉
+            🎉 Happy Birthday, $address  {$name}! 🎉
 
             May the Almighty God shine His light up on you, bless you abundantly
             guide you in all your ways, on this special day of you and for ever.

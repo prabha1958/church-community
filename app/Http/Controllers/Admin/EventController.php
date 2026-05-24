@@ -22,7 +22,7 @@ class EventController extends Controller
     public function index(Request $request): JsonResponse
     {
 
-        $data = Event::query()->orderByDesc('date_of_event')->get();
+        $data = Event::query()->orderByDesc('created_at')->get();
 
         // optional filtering: upcoming only
         //  if ($request->boolean('upcoming')) {
