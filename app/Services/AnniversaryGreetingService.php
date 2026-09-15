@@ -13,29 +13,31 @@ use Illuminate\Support\Str;
 
 class AnniversaryGreetingService
 {
-    protected function log(string $type, string $message, string $level = 'info'): void
-    {
-        DB::table('system_run_logs')->insert([
-            'type' => $type,
-            'message' => $message,
-            'level' => $level,
-            'created_at' => now(),
-        ]);
+    protected function log(
+        string $type,
+        string $message,
+        string $level = 'info'
+    ): void {
+        DB::connection('tenant')
+            ->table('system_run_logs')
+            ->insert([
+                'type' => $type,
+                'message' => $message,
+                'level' => $level,
+                'created_at' => now(),
+            ]);
     }
 
     public function run(Carbon $date, callable $log = null): void
     {
-
         try {
 
             $today = Carbon::today();
 
-            $month = $date->month;
-            $day   = $date->day;
-
-            $this->log('anniversary', "🎉 Checking anniversaries for {$date->toFormattedDateString()}");
-
-
+            $this->log(
+                'anniversary',
+                "🎉 Checking anniversaries for {$date->toFormattedDateString()}"
+            );
 
             $members = Member::query()
                 ->whereNotNull('wedding_date')
@@ -43,11 +45,15 @@ class AnniversaryGreetingService
                 ->whereDay('wedding_date', $today->day)
                 ->get();
 
-            $this->log('anniversary', "💍 Found {$members->count()} member(s)");
+            $this->log(
+                'anniversary',
+                "💍 Found {$members->count()} member(s)"
+            );
 
             foreach ($members as $member) {
 
-                $alreadySent = DB::table('anniversary_greetings')
+                $alreadySent = DB::connection('tenant')
+                    ->table('anniversary_greetings')
                     ->where('member_id', $member->id)
                     ->where('sent_on', $today->toDateString())
                     ->exists();
@@ -57,6 +63,7 @@ class AnniversaryGreetingService
                         'anniversary',
                         "⏭ Skipping {$member->first_name} (already sent today)"
                     );
+
                     continue;
                 }
 
@@ -68,7 +75,10 @@ class AnniversaryGreetingService
                 // 📧 Email
                 if ($member->email) {
                     try {
-                        Mail::to($member->email)->send(new AnniversaryWishMail($member));
+
+                        Mail::to($member->email)
+                            ->send(new AnniversaryWishMail($member));
+
                         $emailSent = true;
 
                         $this->log(
@@ -77,6 +87,7 @@ class AnniversaryGreetingService
                             'success'
                         );
                     } catch (\Throwable $e) {
+
                         Log::error('Anniversary email failed', [
                             'member_id' => $member->id,
                             'error' => $e->getMessage(),
@@ -91,15 +102,17 @@ class AnniversaryGreetingService
                 }
 
                 // 🧾 DB: anniversary_greetings
-                DB::table('anniversary_greetings')->insert([
-                    'member_id' => $member->id,
-                    'wedding_date' => $member->wedding_date,
-                    'sent_on' => $today->toDateString(),
-                    'channel' => $emailSent ? 'email' : 'failed',
-                    'message' => $messageText,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                DB::connection('tenant')
+                    ->table('anniversary_greetings')
+                    ->insert([
+                        'member_id' => $member->id,
+                        'wedding_date' => $member->wedding_date,
+                        'sent_on' => $today->toDateString(),
+                        'channel' => $emailSent ? 'email' : 'failed',
+                        'message' => $messageText,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
 
                 // 📬 Message inbox entry
                 $message = Message::create([
@@ -112,7 +125,9 @@ class AnniversaryGreetingService
                     'published_at' => now(),
                 ]);
 
-                $tokens = DB::table('device_tokens')
+                // 📱 Device tokens
+                $tokens = DB::connection('tenant')
+                    ->table('device_tokens')
                     ->where('member_id', $member->id)
                     ->pluck('token')
                     ->toArray();
@@ -128,34 +143,42 @@ class AnniversaryGreetingService
                 );
             }
 
-            DB::table('system_runs')->updateOrInsert(
-                ['type' => 'anniversary'],
-                ['last_run_at' => now(), 'status' => 'success']
+            // ✅ Record successful run
+            DB::connection('tenant')
+                ->table('system_runs')
+                ->updateOrInsert(
+                    ['type' => 'anniversary'],
+                    [
+                        'last_run_at' => now(),
+                        'status' => 'success',
+                        'updated_at' => now(),
+                    ]
+                );
+
+            $this->log(
+                'anniversary',
+                "✅ Anniversary greetings completed",
+                'success'
             );
-
-
-            DB::table('system_runs')->updateOrInsert(
-                ['type' => 'anniversary'],
-                [
-                    'last_run_at' => now(),
-                    'status' => 'success',
-                    'updated_at' => now(),
-                ]
-            );
-
-            $this->log('anniversary', "✅ Anniversary greetings completed", 'success');
         } catch (\Throwable $e) {
 
-            DB::table('system_runs')->updateOrInsert(
-                ['type' => 'anniversary'],
-                [
-                    'last_run_at' => now(),
-                    'status' => 'failed',
-                    'updated_at' => now(),
-                ]
-            );
+            // ❌ Record failed run
+            DB::connection('tenant')
+                ->table('system_runs')
+                ->updateOrInsert(
+                    ['type' => 'anniversary'],
+                    [
+                        'last_run_at' => now(),
+                        'status' => 'failed',
+                        'updated_at' => now(),
+                    ]
+                );
 
-            $this->log('anniversary', "❌ ERROR: " . $e->getMessage(), 'error');
+            $this->log(
+                'anniversary',
+                "❌ ERROR: " . $e->getMessage(),
+                'error'
+            );
 
             Log::error('Anniversary cron failed', [
                 'error' => $e->getMessage()
@@ -165,10 +188,17 @@ class AnniversaryGreetingService
 
     protected function buildMessage(Member $member): string
     {
-        $name = $member->first_name . ' ' . $member->last_name;
+        $name = trim(
+            $member->first_name . ' ' . $member->last_name
+        );
+
         $name = $name ?: 'Friend';
+
         $spouse = $member->spouse_name ?: 'your beloved spouse';
-        $address = $member->gender === 'male' ? 'Mr' : 'Ms';
+
+        $address = $member->gender === 'male'
+            ? 'Mr'
+            : 'Ms';
 
         return <<<MSG
             🎉 Happy Wedding Anniversary, $address {$name}! 🎉

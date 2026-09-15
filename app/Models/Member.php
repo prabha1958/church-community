@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 
-class Member extends Model
+class Member extends TenantModel
 {
     use HasFactory;
-    use HasApiTokens, Notifiable, HasFactory;
+    use HasApiTokens, Notifiable;
 
     public const ROLE_ADMIN = 'admin';
     public const ROLE_MEMBER = 'member';

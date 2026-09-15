@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
-class Subscription extends Model
+class Subscription extends TenantModel
 {
     protected $fillable = [
         'member_id',

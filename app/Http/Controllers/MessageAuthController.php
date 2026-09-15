@@ -33,6 +33,17 @@ class MessageAuthController extends Controller
 
             $token = $member->createToken('mobile')->plainTextToken;
 
+            $accessToken = $member->tokens()->latest('id')->first();
+
+            Log::info('SANCTUM TOKEN DEBUG', [
+                'member_id' => $member->id,
+                'token_id' => $accessToken?->id,
+                'stored_hash' => $accessToken?->token,
+                'plain_token' => $token,
+                'calculated_hash' => hash('sha256', $token),
+                'connection' => $accessToken?->getConnectionName(),
+            ]);
+
             $alliance = $member->alliance;
 
             Log::info($alliance);
@@ -80,7 +91,12 @@ class MessageAuthController extends Controller
     {
         $member = $request->user();
 
-        // Security: ensure member can see this message
+        // Unpublished messages are not visible to members
+        if (! $message->is_published) {
+            abort(404);
+        }
+
+        // Member-specific messages can only be viewed by the intended member
         if (
             $message->member_id !== null &&
             $message->member_id !== $member->id

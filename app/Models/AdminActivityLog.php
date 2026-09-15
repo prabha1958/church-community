@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 
-class AdminActivityLog extends Model
+
+class AdminActivityLog extends TenantModel
 {
     protected $fillable = [
         'admin_id',

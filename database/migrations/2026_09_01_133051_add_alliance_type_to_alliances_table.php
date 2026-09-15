@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('alliances', function (Blueprint $table) {
-            //
+            $table->enum('alliance_type', ['bride', 'bridegroom']);
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('alliances', function (Blueprint $table) {
-            $table->string('alliance_type')->after('member_id');
+            $table->dropColumn('alliance_type');
         });
     }
 };

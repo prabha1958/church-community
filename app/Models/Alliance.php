@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Alliance extends Model
+class Alliance extends TenantModel
 {
     protected $fillable = [
         'member_id',
@@ -56,10 +56,24 @@ class Alliance extends Model
         return $this->hasMany(AlliancePayment::class, 'alliance_id');
     }
 
+    public static function hasInForceAllianceForMember(
+        int $memberId,
+        ?int $excludeAllianceId = null
+    ): bool {
+        return static::where('member_id', $memberId)
+            ->whereNotNull('payment_date')
+            ->where('payment_date', '>=', now()->subMonths(6))
+            ->when(
+                $excludeAllianceId,
+                fn($query) => $query->where('id', '!=', $excludeAllianceId)
+            )
+            ->exists();
+    }
+
     public function applyPayment(AlliancePayment $payment): void
     {
         $this->amount = $payment->amount;
-        $this->payment_id = $payment->payment_gateway_payment_id ?? null;
+        $this->payment_id = $payment->payment_id ?? null;
         $this->payment_date = $payment->paid_at;
         $this->save();
     }

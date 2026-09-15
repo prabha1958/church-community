@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 
-class AlliancePayment extends Model
+class AlliancePayment extends TenantModel
 {
     protected $fillable = [
         'alliance_id',
@@ -16,6 +16,7 @@ class AlliancePayment extends Model
         'payment_gateway_payment_id',
         'payment_gateway_signature',
         'amount',
+        'payment_id',
         'currency',
         'status',
         'paid_at',

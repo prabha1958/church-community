@@ -2,105 +2,145 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\MemberProfileRequest;
 use Illuminate\Http\Request;
-use App\Models\Member;
-use App\Http\Requests\MemberRequest;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
-
 class MemberController extends Controller
 {
-    public function show(Member $member)
+    /**
+     * Get the authenticated member's own profile.
+     */
+    public function profile(Request $request)
     {
+        $member = $request->user();
+
         return response()->json([
             'success' => true,
             'data' => $member,
         ]);
     }
 
-    public function update(MemberRequest $request, Member $member)
+    /**
+     * Update the authenticated member's own profile.
+     */
+    public function updateProfile(MemberProfileRequest $request)
     {
-
+        $member = $request->user();
 
         $data = $request->validated();
 
-
-
+        /*
+         * Profile photo
+         */
         if ($request->hasFile('profile_photo')) {
-            // delete old photo if present
-            if ($member->profile_photo && Storage::disk('public')->exists($member->profile_photo)) {
-                Storage::disk('public')->delete($member->profile_photo);
+            if (
+                $member->profile_photo &&
+                Storage::disk('public')->exists($member->profile_photo)
+            ) {
+                Storage::disk('public')->delete(
+                    $member->profile_photo
+                );
             }
-            $data['profile_photo'] = $request->file('profile_photo')->store('members/photos', 'public');
+
+            $data['profile_photo'] = $request
+                ->file('profile_photo')
+                ->store('members/photos', 'public');
         }
 
+        /*
+         * Couple photo
+         */
         if ($request->hasFile('couple_pic')) {
-            // delete old photo if present
-            if ($member->couple_pic && Storage::disk('public')->exists($member->couple_pic)) {
-                Storage::disk('public')->delete($member->couple_pic);
+            if (
+                $member->couple_pic &&
+                Storage::disk('public')->exists($member->couple_pic)
+            ) {
+                Storage::disk('public')->delete(
+                    $member->couple_pic
+                );
             }
-            $data['couple_pic'] = $request->file('couple_pic')->store('members/photos', 'public');
+
+            $data['couple_pic'] = $request
+                ->file('couple_pic')
+                ->store('members/photos', 'public');
         }
-
-
 
         $member->update($data);
 
-
-
+        $member->refresh();
 
         return response()->json([
             'success' => true,
-            'message' => 'Member updated.',
+            'message' => 'Profile updated.',
             'data' => $member,
         ]);
     }
 
-    public function updateEmail(Request $request, Member $member)
+    /**
+     * Change the authenticated member's email address.
+     */
+    public function updateEmail(Request $request)
     {
+        $member = $request->user();
+
         $data = $request->validate([
             'email' => [
-                'sometimes',
+                'required',
                 'email',
-                Rule::unique('members', 'email')->ignore($member->id),
-            ],
-            'mobile_number' => [
-                'sometimes',
-                'string',
-                Rule::unique('members', 'mobile_number')->ignore($member->id),
+                Rule::unique('members', 'email')
+                    ->ignore($member->id),
             ],
         ]);
 
-        $member->update($data);
+        $member->update([
+            'email' => $data['email'],
+        ]);
 
-
+        $member->refresh();
 
         return response()->json([
             'success' => true,
-            'message' => 'Email details updated',
-            'data' => $member->only(['email']),
+            'message' => 'Email address updated.',
+            'data' => $member->only([
+                'email',
+            ]),
         ]);
     }
 
-    public function updateMobile(Request $request, Member $member)
+    /**
+     * Change the authenticated member's mobile number.
+     *
+     * NOTE:
+     * This endpoint should ultimately be protected by
+     * OTP verification before we allow the actual update.
+     */
+    public function updateMobile(Request $request)
     {
-        $data = $request->validate([
+        $member = $request->user();
 
+        $data = $request->validate([
             'mobile_number' => [
-                'sometimes',
+                'required',
                 'string',
-                Rule::unique('members', 'mobile_number')->ignore($member->id),
+                Rule::unique('members', 'mobile_number')
+                    ->ignore($member->id),
             ],
         ]);
 
-        $member->update($data);
+        $member->update([
+            'mobile_number' => $data['mobile_number'],
+        ]);
 
+        $member->refresh();
 
         return response()->json([
             'success' => true,
-            'message' => 'Mobile details updated',
-            'data' => $member->only(['mobile_number']),
+            'message' => 'Mobile number updated.',
+            'data' => $member->only([
+                'mobile_number',
+            ]),
         ]);
     }
 }

@@ -22,7 +22,7 @@ class AdminUpdateAllianceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'alliance_type' => 'required|string|max:255',
+            'alliance_type' => 'sometimes|string|max:255',
             'family_name' => 'sometimes|string|max:255',
             'first_name' => 'sometimes|string|max:255',
             'last_name' => 'sometimes|nullable|string|max:255',

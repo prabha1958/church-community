@@ -12,16 +12,23 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
 
-
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
-            // keep other aliases...
-            'auth' => \App\Http\Middleware\Authenticate::class,
-            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
 
+        $middleware->alias([
+            'tenant' => \App\Http\Middleware\IdentifyTenant::class,
+            'auth'   => \App\Http\Middleware\Authenticate::class,
+            'admin'  => \App\Http\Middleware\EnsureUserIsAdmin::class,
+        ]);
+
+        /*
+         * Tenant identification must happen before authentication.
+         */
+        $middleware->prependToGroup('api', [
+            \App\Http\Middleware\IdentifyTenant::class,
         ]);
     })
+
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->create();

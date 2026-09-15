@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 
-class PastorateComMember extends Model
+
+class PastorateComMember extends TenantModel
 {
     protected $fillable = [
         'family_name',

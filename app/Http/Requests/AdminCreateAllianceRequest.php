@@ -20,7 +20,7 @@ class AdminCreateAllianceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'member_id' => 'required|digits:5',
+            'member_id' => 'required|digits:2',
             'family_name' => 'required|nullable|string|max:255',
             'first_name' => 'required|string|max:255',
             'last_name' => 'sometimes|nullable|string|max:255',

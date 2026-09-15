@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class BirthdayGreeting extends Model
+class BirthdayGreeting extends TenantModel
 {
     protected $fillable = [
         'member_id',

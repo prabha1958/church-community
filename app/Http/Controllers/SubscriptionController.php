@@ -9,8 +9,10 @@ use App\Models\Subscription;
 class SubscriptionController extends Controller
 {
 
-    public function show(Member $member)
+    public function show(Request $request)
     {
+
+        $member = $request->user();
         $fy = Subscription::financialYearForDate();
 
         $sub = Subscription::where('member_id', $member->id)

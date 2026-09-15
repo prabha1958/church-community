@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Member;
 use App\Models\Subscription;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AllianceController extends Controller
 {
@@ -174,18 +175,43 @@ class AllianceController extends Controller
         ]);
     }
 
-    public function togglePublish(Request $request, Alliance $alliance)
+    public function togglePublish(Request $request, $allianceId)
     {
-        $alliance->update([
-            'is_published' => ! $alliance->is_published,
-        ]);
+        $alliance = Alliance::on('tenant')->find($allianceId);
+
+        if (!$alliance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Alliance not found.',
+            ], 404);
+        }
+
+        $currentStatus = DB::connection('tenant')
+            ->table('alliances')
+            ->where('id', $allianceId)
+            ->value('is_published');
+
+        $newStatus = ((int) $currentStatus === 1) ? 0 : 1;
+
+        DB::connection('tenant')
+            ->table('alliances')
+            ->where('id', $allianceId)
+            ->update([
+                'is_published' => $newStatus,
+                'updated_at' => now(),
+            ]);
+
+        $savedStatus = DB::connection('tenant')
+            ->table('alliances')
+            ->where('id', $allianceId)
+            ->value('is_published');
 
         return response()->json([
             'success' => true,
-            'message' => $alliance->is_published
+            'message' => ((int) $savedStatus === 1)
                 ? 'Alliance published successfully'
                 : 'Alliance unpublished successfully',
-            'is_published' => $alliance->is_published,
+            'is_published' => (bool) $savedStatus,
         ]);
     }
 }

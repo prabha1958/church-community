@@ -196,28 +196,41 @@ class AlliancePaymentController extends Controller
 
     public function payOffline(Request $request, Alliance $alliance)
     {
-        $user = Auth::user();
+        $user = $request->user();
 
         if ($user->id !== $alliance->member_id && ($user->role ?? '') !== 'admin') {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $data = $request->validate([
-            'amount'        => 'required|numeric|min:' . $this->minimumRupees,
-            'payment_mode'  => 'required|in:cash,upi',
-            'reference_no'  => 'required|string|max:255',
+            'amount'       => 'required|numeric|min:' . $this->minimumRupees,
+            'payment_mode' => 'required|in:cash,upi',
+            'reference_no' => 'required|string|max:255',
         ]);
 
-        $payment = DB::transaction(function () use ($alliance, $data) {
+        // Check whether another Alliance for this member is already
+        // in force for the six-month period.
+        $existingActiveAlliance = Alliance::hasInForceAllianceForMember(
+            $alliance->member_id,
+            $alliance->id
+        );
 
-            $user = Auth::user();
+        if ($existingActiveAlliance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This member already has an active alliance within the last 6 months.',
+            ], 422);
+        }
+
+        $payment = DB::transaction(function () use ($alliance, $data, $user) {
 
             $payment = AlliancePayment::create([
                 'alliance_id' => $alliance->id,
-                'member_id'   => $alliance->member_id,
+                'member_id' => $alliance->member_id,
                 'admin_id' => $user->id,
                 'payment_gateway' => 'offline',
                 'amount' => $data['amount'],
+                'payment_id' => $data['reference_no'],
                 'currency' => 'INR',
                 'status' => 'paid',
                 'paid_at' => now(),
@@ -232,19 +245,20 @@ class AlliancePaymentController extends Controller
             return $payment;
         });
 
-        // 📧 EMAIL RECEIPT
+        // Email receipt
         try {
             $payment->load('member', 'alliance');
-            Mail::to($payment->member->email)
-                ->send(new AllianceReceiptMail($payment));
+
+            if ($payment->member?->email) {
+                Mail::to($payment->member->email)
+                    ->send(new AllianceReceiptMail($payment));
+            }
         } catch (\Throwable $e) {
             Log::error('Alliance offline receipt email failed', [
                 'payment_id' => $payment->id,
                 'error' => $e->getMessage(),
             ]);
         }
-
-
 
         return response()->json([
             'success' => true,

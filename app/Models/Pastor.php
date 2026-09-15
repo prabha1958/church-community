@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+
 use Illuminate\Support\Facades\Storage;
 
-class Pastor extends Model
+class Pastor extends TenantModel
 {
     protected $fillable = [
         'name',

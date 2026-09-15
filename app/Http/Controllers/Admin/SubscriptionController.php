@@ -164,9 +164,13 @@ class SubscriptionController extends Controller
         }
 
         /** ✅ IMPORTANT: capture payment OUTSIDE transaction */
-        $payment = DB::transaction(function () use ($data) {
+        $payment = DB::connection('tenant')->transaction(function () use ($data, $member) {
 
-            $payment = Payment::where('razorpay_order_id', $data['razorpay_order_id'])
+            $payment = Payment::where(
+                'razorpay_order_id',
+                $data['razorpay_order_id']
+            )
+                ->where('member_id', $member->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -254,9 +258,12 @@ class SubscriptionController extends Controller
             ->where('status_flag', true)
             ->when($request->filled('search'), function ($q) use ($request) {
                 $s = $request->search;
-                $q->where('id', $s)
-                    ->orWhere('first_name', 'like', "%{$s}%")
-                    ->orWhere('last_name', 'like', "%{$s}%");
+
+                $q->where(function ($query) use ($s) {
+                    $query->where('id', $s)
+                        ->orWhere('first_name', 'like', "%{$s}%")
+                        ->orWhere('last_name', 'like', "%{$s}%");
+                });
             })
             ->orderBy('updated_at')
             ->get();
@@ -376,7 +383,7 @@ class SubscriptionController extends Controller
 
         $amount = count($data['months']) * $sub->monthly_fee;
 
-        DB::transaction(function () use ($member, $sub, $data, $amount) {
+        $payment = DB::connection('tenant')->transaction(function () use ($member, $sub, $data, $amount) {
             $user = Auth::user();
             $payment = Payment::create([
                 'member_id'       => $member->id,
@@ -398,13 +405,14 @@ class SubscriptionController extends Controller
                     "{$m}_paid_at"    => now(),
                 ]);
             }
+            return $payment;
         });
 
 
 
 
         // 📧 email receipt (same mail class)
-        $payment = Payment::latest()->first();
+
 
         $receiptPath = app(SubscriptionReceiptService::class)
             ->generate($payment);
