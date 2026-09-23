@@ -240,8 +240,8 @@ class TenantProvisioningService
             */
 
             $church->update([
-                'status' => 'active',
-                'activated_at' => now(),
+                'status' => 'pending',
+                'activated_at' => null,
             ]);
 
             return $tenantDatabase;

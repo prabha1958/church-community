@@ -26,25 +26,18 @@ class TenantDatabase extends Model
         'provisioned_at',
     ];
 
+    protected $hidden = [
+        'database_password',
+    ];
+
     protected function casts(): array
     {
         return [
             'church_id' => 'integer',
             'database_port' => 'integer',
-
-            // Laravel automatically encrypts when storing
-            // and decrypts when retrieving.
-            'database_password' => 'encrypted',
-
             'provisioned_at' => 'datetime',
         ];
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
 
     public function church(): BelongsTo
     {

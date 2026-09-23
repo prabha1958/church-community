@@ -88,6 +88,22 @@ return [
             ]) : [],
         ],
 
+        'tenant_provisioning' => [
+            'driver' => 'mysql',
+            'host' => env('TENANT_PROVISION_DB_HOST', 'localhost'),
+            'port' => env('TENANT_PROVISION_DB_PORT', 3306),
+            'database' => null,
+            'username' => env('TENANT_PROVISION_DB_USERNAME'),
+            'password' => env('TENANT_PROVISION_DB_PASSWORD'),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'provisioner' => [
             'driver' => 'mysql',
             'url' => null,

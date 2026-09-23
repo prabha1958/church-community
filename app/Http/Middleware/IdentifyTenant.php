@@ -23,6 +23,24 @@ class IdentifyTenant
         Closure $next
     ): Response {
 
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | Platform-level routes that do not belong to a tenant
+    |--------------------------------------------------------------------------
+    |
+    | Church registration happens before a church code exists.
+    |
+    */
+        if (
+            $request->is('api/onboarding/register') ||
+            $request->is('api/onboarding/setup-admin')
+        ) {
+            return $next($request);
+        }
+
+
         /*
         |--------------------------------------------------------------------------
         | Get church code
@@ -33,6 +51,10 @@ class IdentifyTenant
         | X-Church-Code: CWCR
         |
         */
+
+        if ($request->is('api/platform/*')) {
+            return $next($request);
+        }
 
         $churchCode = $request->header('X-Church-Code');
 

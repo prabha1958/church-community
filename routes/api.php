@@ -38,6 +38,10 @@ use App\Models\Alliance;
 use App\Models\AlliancePayment;
 use App\Models\AnniversaryGreeting;
 use App\Models\OtpCode;
+use App\Http\Controllers\Platform\PlatformChurchController;
+use App\Http\Controllers\Platform\PlatformAuthController;
+use App\Http\Controllers\Platform\PlatformOnboardingController;
+use App\Http\Controllers\Platform\PlatformMemberController;
 
 
 // ============================================================
@@ -601,6 +605,104 @@ Route::middleware([
         'annlogs'
     ]);
 });
+
+
+
+// ============================================================
+// PLATFORM
+// ============================================================
+
+Route::middleware('platform.auth')->group(function () {
+    Route::get(
+        'platform/churches/{church}/join-url',
+        [PlatformChurchController::class, 'joinUrl']
+    );
+});
+
+Route::post(
+    'platform/auth/login',
+    [PlatformAuthController::class, 'login']
+);
+
+Route::middleware('platform.auth')->group(function () {
+    Route::post(
+        'platform/auth/change-password',
+        [PlatformAuthController::class, 'changePassword']
+    );
+});
+
+Route::middleware('platform.auth')->group(function () {
+    Route::get(
+        'platform/church',
+        [PlatformChurchController::class, 'show']
+    );
+
+    Route::patch(
+        'platform/church',
+        [PlatformChurchController::class, 'update']
+    );
+
+    Route::get(
+        'platform/churches/{church}/join-url',
+        [PlatformChurchController::class, 'joinUrl']
+    );
+
+    Route::post(
+        'platform/church/logo',
+        [PlatformChurchController::class, 'uploadLogo']
+    );
+    Route::post(
+        'platform/onboarding/complete',
+        [PlatformOnboardingController::class, 'complete']
+    );
+    Route::post(
+        'platform/members',
+        [
+            \App\Http\Controllers\Platform\PlatformMemberController::class,
+            'store',
+        ]
+    )->middleware('platform.tenant');
+    Route::get(
+        'platform/members',
+        [
+            \App\Http\Controllers\Platform\PlatformMemberController::class,
+            'index',
+        ]
+    )->middleware('platform.tenant');
+
+    /*
+     * Bulk member import
+     */
+    Route::get('platform/members/import/template', [
+        PlatformMemberController::class,
+        'importTemplate',
+    ])->middleware('platform.tenant');
+
+    Route::post('platform/members/import/preview', [
+        PlatformMemberController::class,
+        'importPreview',
+    ])->middleware('platform.tenant');
+
+    Route::post('platform/members/import', [
+        PlatformMemberController::class,
+        'import',
+    ])->middleware('platform.tenant');
+});
+
+
+
+Route::prefix('onboarding')->group(function () {
+    Route::post(
+        'register',
+        [PlatformOnboardingController::class, 'register']
+    )->name('platform.onboarding.register');
+
+    Route::post(
+        'setup-admin',
+        [PlatformOnboardingController::class, 'createSetupAdmin']
+    );
+});
+
 
 
 // ============================================================

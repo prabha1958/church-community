@@ -18,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => \App\Http\Middleware\IdentifyTenant::class,
             'auth'   => \App\Http\Middleware\Authenticate::class,
             'admin'  => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'platform.auth' => \App\Http\Middleware\PlatformAuthenticate::class,
+            'platform.tenant' => \App\Http\Middleware\PlatformTenant::class,
         ]);
 
         /*
