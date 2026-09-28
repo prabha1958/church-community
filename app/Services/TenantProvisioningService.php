@@ -227,10 +227,12 @@ class TenantProvisioningService
             |--------------------------------------------------------------------------
             */
 
-            $church->update([
-                'status' => 'active',
-                'activated_at' => now(),
+            $tenantDatabase->update([
+                'status' => 'ready',
+                'provisioned_at' => now(),
+                'error_message' => null,
             ]);
+
             /*
             |--------------------------------------------------------------------------
             | 14. Activate church
@@ -238,8 +240,8 @@ class TenantProvisioningService
             */
 
             $church->update([
-                'status' => 'pending',
-                'activated_at' => null,
+                'status' => 'active',
+                'activated_at' => now(),
             ]);
 
             return $tenantDatabase;
@@ -381,7 +383,6 @@ class TenantProvisioningService
     protected function generateUniqueDatabaseUsername(
         Church $church
     ): string {
-
         return 'cm_' . strtolower($church->church_code);
     }
 
@@ -431,26 +432,7 @@ class TenantProvisioningService
 
 
     /*
-    |--------------------------------------------------------------------------
-    | Check MySQL user existence
-    |--------------------------------------------------------------------------
-    */
 
-    protected function mysqlUserExists(string $username): bool
-    {
-        $result = DB::connection('provisioner')->select(
-            'SELECT User
-             FROM mysql.user
-             WHERE User = ?
-             AND Host = ?',
-            [
-                $username,
-                'localhost',
-            ]
-        );
-
-        return count($result) > 0;
-    }
 
 
     /*
