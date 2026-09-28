@@ -42,6 +42,7 @@ use App\Http\Controllers\Platform\PlatformChurchController;
 use App\Http\Controllers\Platform\PlatformAuthController;
 use App\Http\Controllers\Platform\PlatformOnboardingController;
 use App\Http\Controllers\Platform\PlatformMemberController;
+use App\Http\Controllers\ChurchInfoController;
 
 
 // ============================================================
@@ -117,6 +118,11 @@ Route::middleware([
     Route::patch('/member/profile/mobile', [
         MemberController::class,
         'updateMobile'
+    ]);
+
+    Route::get('/member/details', [
+        MemberController::class,
+        'details'
     ]);
 
     // --------------------------------------------------------
@@ -702,6 +708,11 @@ Route::prefix('onboarding')->group(function () {
         [PlatformOnboardingController::class, 'createSetupAdmin']
     );
 });
+
+Route::get('/church', [
+    ChurchInfoController::class,
+    'show',
+])->name('church.info');
 
 
 

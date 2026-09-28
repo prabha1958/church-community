@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\TenantModel;
 
-class Event extends Model
+class Event extends TenantModel
 {
     use HasFactory;
 

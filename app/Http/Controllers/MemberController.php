@@ -6,6 +6,8 @@ use App\Http\Requests\MemberProfileRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Models\Member;
+
 
 class MemberController extends Controller
 {
@@ -141,6 +143,41 @@ class MemberController extends Controller
             'data' => $member->only([
                 'mobile_number',
             ]),
+        ]);
+    }
+
+    public function details(Request $request)
+    {
+        /** @var \App\Models\Member $member */
+        $member = $request->user();
+
+        // Reload the member from the tenant database
+        $member = Member::query()
+            ->where('id', $member->id)
+            ->with([
+                'alliance.payments',
+                'subscriptions',
+                'latestSubscription',
+                'poorFeedings',
+            ])
+            ->first();
+
+        if (!$member) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Member not found.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'member' => $member,
+                'alliance' => $member->alliance,
+                'subscriptions' => $member->subscriptions,
+                'latest_subscription' => $member->latestSubscription,
+                'poor_feedings' => $member->poorFeedings,
+            ],
         ]);
     }
 }

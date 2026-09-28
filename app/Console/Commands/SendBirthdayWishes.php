@@ -3,232 +3,170 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\Member;
-use App\Mail\BirthdayWishMail;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
-use Carbon\Carbon;
-use App\Models\BirthdayGreeting;
-use App\Models\Message;
+use App\Models\Church;
+use App\Services\TenantConnectionService;
+use App\Services\BirthdayGreetingService;
 use Illuminate\Support\Facades\DB;
-use App\Services\ExpoPushService;
-
+use Illuminate\Support\Facades\Log;
 
 class SendBirthdayWishes extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * Run with: php artisan send:birthday-wishes
-     */
-    protected $signature = 'send:birthday-wishes {--whatsapp : send WhatsApp messages instead of SMS} {--dry : dry run - do not actually send messages} {--template= : custom message template (optional)}';
+    protected $signature = 'send:birthday-wishes
+        {--whatsapp : send WhatsApp messages instead of SMS}
+        {--dry : dry run - do not actually send messages}
+        {--template= : custom message template (optional)}';
 
-    protected $description = 'Send birthday wishes (email and optional WhatsApp) to members whose birthday is today';
+    protected $description =
+    'Send birthday wishes to members across all active churches';
 
-    public function handle(): int
-    {
-        $today = Carbon::today();
-        $month = $today->month;
-        $day = $today->day;
-        $year = $today->year;
+    public function handle(
+        TenantConnectionService $tenantConnectionService,
+        BirthdayGreetingService $birthdayGreetingService
+    ): int {
 
-        Log::info("command run");
+        $this->info('Starting birthday wishes command...');
 
+        /*
+        |--------------------------------------------------------------------------
+        | Get active churches from PLATFORM database
+        |--------------------------------------------------------------------------
+        */
 
-
-        $this->info("Looking up members with birthday on {$today->toDateString()}");
-
-        $members = Member::query()
-            ->whereNotNull('date_of_birth')
-            ->whereMonth('date_of_birth', $month)
-            ->whereDay('date_of_birth', $day)
+        $churches = Church::query()
+            ->where('status', 'active')
             ->get();
 
-        $count = $members->count();
-        $this->info("Found {$count} member(s).");
+        if ($churches->isEmpty()) {
+            $this->warn('No active churches found.');
+            return self::SUCCESS;
+        }
 
-        if ($count === 0) {
-            DB::table('system_runs')->updateOrInsert(
-                ['type' => 'birthday'],
-                [
-                    'last_run_at' => now(),
-                    'status' => 'failed',
-                    'updated_at' => now(),
-                ]
+        $this->info(
+            "Found {$churches->count()} active church(es)."
+        );
+
+        $successCount = 0;
+        $failedCount = 0;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Process each church
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($churches as $church) {
+
+            $this->newLine();
+
+            $this->info(
+                "=================================================="
             );
 
-            return 0;
-        }
+            $this->info(
+                "Processing church: {$church->church_code}"
+            );
 
+            $this->info(
+                "Church name: {$church->church_name}"
+            );
 
+            try {
 
+                /*
+                |--------------------------------------------------------------------------
+                | Connect to this church's tenant database
+                |--------------------------------------------------------------------------
+                */
 
-        $sendWhatsapp = $this->option('whatsapp');
-        $dry = $this->option('dry');
-        $templateOption = $this->option('template');
+                $tenantConnectionService->connect($church);
 
-        foreach ($members as $member) {
+                $databaseName = DB::connection('tenant')
+                    ->getDatabaseName();
 
-            // 🔒 DUPLICATE CHECK (correct place)
-            $alreadySent = BirthdayGreeting::where('member_id', $member->id)
-                ->where('greeted_year', $year)
-                ->exists();
+                $this->info(
+                    "Tenant database: {$databaseName}"
+                );
 
-            if ($alreadySent) {
-                $this->warn("Birthday already sent to member {$member->id} for {$year}, skipping.");
+                /*
+                |--------------------------------------------------------------------------
+                | Run birthday processing for this tenant
+                |--------------------------------------------------------------------------
+                */
+
+                $birthdayGreetingService->run(
+                    $this->option('whatsapp')
+                );
+
+                $this->info(
+                    "✓ Birthday processing completed for {$church->church_code}"
+                );
+
+                $successCount++;
+            } catch (\Throwable $e) {
+
+                $failedCount++;
+
+                $this->error(
+                    "✗ Failed for {$church->church_code}: {$e->getMessage()}"
+                );
+
+                Log::error(
+                    'Birthday greeting failed for church',
+                    [
+                        'church_id' => $church->id,
+                        'church_code' => $church->church_code,
+                        'church_name' => $church->church_name,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | Important:
+                | Continue with the next church.
+                |--------------------------------------------------------------------------
+                */
+
                 continue;
-            }
+            } finally {
 
-            $toEmail = $member->email;
-            $toMobile = $member->mobile_number ?? $member->mobile ?? null;
+                /*
+                |--------------------------------------------------------------------------
+                | Disconnect tenant after processing this church.
+                |--------------------------------------------------------------------------
+                */
 
-            $emailSent = false;
-            $whatsAppSent = false;
-
-            $this->line("Processing member ID {$member->id}");
-
-
-            // 📧 EMAIL
-            if ($toEmail && ! $dry) {
                 try {
-                    Mail::to($toEmail)->send(new BirthdayWishMail($member));
-                    $emailSent = true;
-                    $this->info("Email sent to {$toEmail}");
+                    DB::purge('tenant');
                 } catch (\Throwable $e) {
-                    Log::error('Birthday email failed', [
-                        'member_id' => $member->id,
-                        'error' => $e->getMessage()
-                    ]);
+                    Log::warning(
+                        'Unable to purge tenant connection',
+                        [
+                            'church_code' => $church->church_code,
+                            'error' => $e->getMessage(),
+                        ]
+                    );
                 }
             }
-
-            // 📱 WHATSAPP
-
-            $messageText = $this->buildMessage($member);
-
-
-            // 🧾 DB RECORDS — ALWAYS CREATED ONCE
-            try {
-                BirthdayGreeting::create([
-                    'member_id' => $member->id,
-                    'greeted_on' => $today->toDateString(),
-                    'greeted_year' => $year,
-                    'email_sent' => $emailSent,
-                    'whatsapp_sent' => $whatsAppSent,
-                ]);
-
-                $imagePath = $member->getRawOriginal('profile_photo');
-
-                $message = Message::create([
-                    'member_id' => $member->id,
-                    'image_path' => $imagePath,
-                    'title' => 'Happy Birthday 🎉',
-                    'body' => $messageText,
-                    'message_type' => 'birthday',
-                    'is_published' => 1,
-                    'published_at' => now(),
-                ]);
-
-                $tokens = DB::table('device_tokens')
-                    ->where('member_id', $member->id)
-                    ->pluck('token')
-                    ->toArray();
-
-                ExpoPushService::send(
-                    $tokens,
-                    $message->title,
-                    $message->body,
-                    [
-                        'type' => 'birthday',
-                        'message_id' => $message->id
-                    ]
-                );
-
-                DB::table('system_runs')->updateOrInsert(
-                    ['type' => 'birthday'],
-                    [
-                        'last_run_at' => now(),
-                        'status' => 'success',
-                        'updated_at' => now(),
-                    ]
-                );
-            } catch (\Throwable $e) {
-                Log::error('Failed to persist birthday greeting', [
-                    'member_id' => $member->id,
-                    'error' => $e->getMessage()
-                ]);
-            }
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Summary
+        |--------------------------------------------------------------------------
+        */
 
-        $this->info('Done.');
-        return 0;
-    }
+        $this->newLine();
 
-    /**
-     * Build WhatsApp message text (simple templating).
-     */
-    protected function buildWhatsappText($member, ?string $template = null): string
-    {
-        $name = $member->first_name ?? $member->name ?? 'Friend';
-        $default = "Happy Birthday, {$name}! 🎉\nWarm wishes from CSI CENTENARY WESLEY CHURCH on your Birthday. God bless you.";
-        if (! $template) return $default;
+        $this->info('==============================================');
+        $this->info('Birthday wishes command completed.');
+        $this->info("Successful churches: {$successCount}");
+        $this->info("Failed churches: {$failedCount}");
+        $this->info('==============================================');
 
-        // Simple replacements: {name}
-        return str_replace('{name}', $name, $template);
-    }
-
-    protected function buildMessage(Member $member)
-    {
-        $name = $member->first_name . ' ' . $member->last_name;
-        $name = $name ?: 'Friend';
-        $address = $member->gender === 'male' ? 'Mr' : 'Ms';
-
-
-        return <<<MSG
-            🎉 Happy Birthday, $address  {$name}! 🎉
-
-            May the Almighty God shine His light up on you, bless you abundantly
-            guide you in all your ways, on this special day of you and for ever.
-
-            HAPPY BIRTHDAY
-
-            God bless you.
-
-            MSG;
-    }
-
-    /**
-     * Send WhatsApp message using Twilio (SDK or HTTP fallback).
-     *
-     * Returns array with 'sid' when available.
-     */
-
-
-    /**
-     * Normalize a raw mobile number to Twilio WhatsApp format: 'whatsapp:+<E.164>'.
-     * If number already starts with 'whatsapp:' keep; if already E.164 begin with '+', prefix with 'whatsapp:'.
-     * This is a best-effort helper; prefer storing E.164 numbers in DB.
-     */
-    protected function normalizeWhatsAppNumber(string $raw): string
-    {
-        $raw = trim($raw);
-
-        if (stripos($raw, 'whatsapp:') === 0) {
-            return $raw;
-        }
-
-        // if number already has +, just prefix
-        if (str_starts_with($raw, '+')) {
-            return 'whatsapp:' . $raw;
-        }
-
-        // remove non-digit characters and prefix with + if you know country code (dangerous)
-        $digits = preg_replace('/\D+/', '', $raw);
-
-        // If digits already include country code (best-effort), prefix +.
-        // WARNING: This may be incorrect for local numbers. Prefer E.164 storage.
-        return 'whatsapp:+' . $digits;
+        return $failedCount > 0
+            ? self::FAILURE
+            : self::SUCCESS;
     }
 }
