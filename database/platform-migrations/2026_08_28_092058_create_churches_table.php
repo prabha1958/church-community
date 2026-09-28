@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('churches', function (Blueprint $table) {
+        Schema::connection('platform')->create('churches', function (Blueprint $table) {
             $table->id();
 
             // Public identifier used by the mobile app / QR code.

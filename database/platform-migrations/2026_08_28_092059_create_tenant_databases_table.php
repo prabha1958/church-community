@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('tenant_databases', function (Blueprint $table) {
+        Schema::connection('platform')->create('tenant_databases', function (Blueprint $table) {
             $table->id();
 
             // One tenant database per church.

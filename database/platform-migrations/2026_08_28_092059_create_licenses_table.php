@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('licenses', function (Blueprint $table) {
+        Schema::connection('platform')->create('licenses', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('church_id')

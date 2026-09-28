@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('platform_users', function (Blueprint $table) {
+        Schema::connection('platform')->create('platform_users', function (Blueprint $table) {
             $table->id();
 
             /*
