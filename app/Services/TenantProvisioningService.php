@@ -227,12 +227,10 @@ class TenantProvisioningService
             |--------------------------------------------------------------------------
             */
 
-            $tenantDatabase->update([
-                'status' => 'ready',
-                'provisioned_at' => now(),
-                'error_message' => null,
+            $church->update([
+                'status' => 'active',
+                'activated_at' => now(),
             ]);
-
             /*
             |--------------------------------------------------------------------------
             | 14. Activate church
@@ -384,21 +382,7 @@ class TenantProvisioningService
         Church $church
     ): string {
 
-        $base = 'cm_' .
-            strtolower($church->church_code);
-
-        $username = $base;
-
-        $counter = 1;
-
-        while ($this->mysqlUserExists($username)) {
-
-            $username = $base . '_' . $counter;
-
-            $counter++;
-        }
-
-        return $username;
+        return 'cm_' . strtolower($church->church_code);
     }
 
 
