@@ -142,11 +142,7 @@ class PlatformOnboardingController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        if (!in_array(
-            strtolower((string) $church->status),
-            ['pending', 'provisioning'],
-            true
-        )) {
+        if (strtolower((string) $church->status) !== 'active') {
             return response()->json([
                 'success' => false,
                 'message' =>

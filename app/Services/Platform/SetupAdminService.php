@@ -30,17 +30,18 @@ class SetupAdminService
     /**
      * Onboarding workflow.
      *
-     * Allows the first setup admin to be created while the
-     * church is still pending or provisioning.
+     * The church must have completed tenant provisioning
+     * and must be active before the first setup administrator
+     * can be created.
      */
     public function createForOnboarding(
         Church $church,
         string $name,
         string $email
     ): array {
-        if (!in_array($church->status, ['pending', 'provisioning'], true)) {
+        if ($church->status !== 'active') {
             throw new RuntimeException(
-                "Church {$church->church_code} is not in an onboarding state."
+                "Church {$church->church_code} is not ready for setup administrator creation."
             );
         }
 
@@ -178,9 +179,9 @@ class SetupAdminService
                     ->lockForUpdate()
                     ->findOrFail($church->id);
 
-                if (!in_array($church->status, ['pending', 'provisioning'], true)) {
+                if ($church->status !== 'active') {
                     throw new RuntimeException(
-                        "Church {$church->church_code} is not in an onboarding state."
+                        "Church {$church->church_code} is not ready for setup administrator operations."
                     );
                 }
 
