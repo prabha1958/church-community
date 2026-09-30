@@ -93,9 +93,7 @@ class SendBirthdayWishes extends Command
                 |--------------------------------------------------------------------------
                 */
 
-                $birthdayGreetingService->run(
-                    $this->option('whatsapp')
-                );
+
 
                 $this->info(
                     "✓ Birthday processing completed for {$church->church_code}"

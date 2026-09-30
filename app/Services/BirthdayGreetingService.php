@@ -9,6 +9,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use App\Models\Church;
+use App\Models\Pastor;
 
 class BirthdayGreetingService
 {
@@ -27,12 +29,14 @@ class BirthdayGreetingService
             ]);
     }
 
-    public function run(bool $sendWhatsapp = false): void
+    public function run(Church $church, bool $sendWhatsapp = false): void
     {
+
         try {
 
             $today = Carbon::today();
             $year = $today->year;
+            $churchId = $church->id;
 
             $this->log(
                 'birthday',
@@ -53,6 +57,13 @@ class BirthdayGreetingService
                 'birthday',
                 "🎂 Found {$members->count()} member(s)"
             );
+
+
+            $church = Church::on('platform')
+                ->where('id', $churchId)
+                ->firstOrFail();
+
+            $presbyter = Pastor::where('order_no', 1)->first();
 
             foreach ($members as $member) {
 
@@ -82,11 +93,13 @@ class BirthdayGreetingService
                 |--------------------------------------------------------------------------
                 */
 
+
+
                 if ($member->email) {
 
                     Mail::to($member->email)
                         ->send(
-                            new \App\Mail\BirthdayWishMail($member)
+                            new \App\Mail\BirthdayWishMail($member, $church, $presbyter)
                         );
 
                     $this->log(
