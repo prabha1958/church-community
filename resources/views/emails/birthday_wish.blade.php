@@ -88,7 +88,8 @@
                                 @if ($church->logo)
                                     <div style="text-align: center; margin-bottom: 20px;">
                                         <img src="{{ 'https://csiadmin.csimarital.in/storage/' . $church->logo }}"
-                                            alt="{{ $church->church_name }}" style="max-width: 180px; height: auto;">
+                                            alt="{{ $church->church_name }}"
+                                            style="display:block; margin:0 auto; width:90px; max-width:90px; height:auto; border:0; outline:none; text-decoration:none;">
                                     </div>
                                 @endif
 
@@ -118,7 +119,7 @@
 
                             <div class="name"
                                 style="font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif; font-size:36px; line-height:42px; font-weight:600; color:#F2D98D; padding-top:8px;">
-                                Dear {{ $name }},
+                                {{ $name }},
                             </div>
                         </td>
                     </tr>
@@ -226,7 +227,7 @@
                             </div>
                             <div
                                 style="font-family:'Mulish',Arial,sans-serif; font-size:14px; line-height:22px; color:#6A7090;">
-                                Your Church Name
+                                {{ $church->name ?? 'Your Church' }}
                             </div>
                         </td>
                     </tr>
@@ -241,14 +242,14 @@
                             </div>
                             <div
                                 style="font-family:'Mulish',Arial,sans-serif; font-size:12px; line-height:20px; color:#AEB6DA;">
-                                Your Church Name &bull; Street Address, City<br>
-                                Tel: +000 000 000 000 &bull; <a href="mailto:office@yourchurch.org"
-                                    style="color:#D9C48A; text-decoration:underline;">office@yourchurch.org</a>
+                                {{ $church->church_name }} &bull; {{ $church->address }} {{ $churh->city }}<br>
+                                &bull; <a href="mailto:office@yourchurch.org"
+                                    style="color:#D9C48A; text-decoration:underline;">{{ $church->email ?? '' }}</a>
                             </div>
                             <div
                                 style="font-family:'Mulish',Arial,sans-serif; font-size:11px; line-height:18px; color:#8790BD; padding-top:14px;">
                                 You are receiving this because you are a member of our congregation.<br>
-                                <a href="#" style="color:#8790BD; text-decoration:underline;">Unsubscribe</a>
+
                             </div>
                         </td>
                     </tr>
