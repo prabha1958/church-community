@@ -21,10 +21,12 @@ class SendBirthdayWishes extends Command
 
     public function handle(
         TenantConnectionService $tenantConnectionService,
-        BirthdayGreetingService $birthdayGreetingService
+        BirthdayGreetingService $birthdayGreetingService,
+        Church $church
     ): int {
 
         $this->info('Starting birthday wishes command...');
+
 
         /*
         |--------------------------------------------------------------------------
@@ -70,6 +72,8 @@ class SendBirthdayWishes extends Command
                 "Church name: {$church->church_name}"
             );
 
+
+
             try {
 
                 /*
@@ -80,11 +84,19 @@ class SendBirthdayWishes extends Command
 
                 $tenantConnectionService->connect($church);
 
+
+
                 $databaseName = DB::connection('tenant')
                     ->getDatabaseName();
 
                 $this->info(
                     "Tenant database: {$databaseName}"
+                );
+
+
+                $birthdayGreetingService->run(
+                    $church,
+                    $this->option('whatsapp')
                 );
 
                 /*
