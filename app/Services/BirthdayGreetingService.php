@@ -67,110 +67,194 @@ class BirthdayGreetingService
 
             foreach ($members as $member) {
 
-                $alreadySent = BirthdayGreeting::where(
-                    'member_id',
-                    $member->id
-                )
-                    ->where(
-                        'greeted_year',
-                        $year
-                    )
-                    ->exists();
-
-                if ($alreadySent) {
+                try {
 
                     $this->log(
                         'birthday',
-                        "⏭ Skipping {$member->first_name} (already sent)"
+                        "🎂 Processing member #{$member->id}: {$member->first_name} {$member->last_name}"
                     );
 
-                    continue;
-                }
+                    /*
+        |--------------------------------------------------------------------------
+        | Check whether birthday was already processed this year
+        |--------------------------------------------------------------------------
+        */
 
-                /*
-                |--------------------------------------------------------------------------
-                | Email
-                |--------------------------------------------------------------------------
-                */
+                    $alreadySent = BirthdayGreeting::where(
+                        'member_id',
+                        $member->id
+                    )
+                        ->where(
+                            'greeted_year',
+                            $year
+                        )
+                        ->exists();
 
+                    if ($alreadySent) {
 
-
-                if ($member->email) {
-
-                    Mail::to($member->email)
-                        ->send(
-                            new \App\Mail\BirthdayWishMail($member, $church, $presbyter)
+                        $this->log(
+                            'birthday',
+                            "⏭ Skipping {$member->first_name} #{$member->id} - already sent for {$year}"
                         );
 
+                        continue;
+                    }
+
+                    /*
+        |--------------------------------------------------------------------------
+        | Email
+        |--------------------------------------------------------------------------
+        */
+
+                    if ($member->email) {
+
+                        $this->log(
+                            'birthday',
+                            "📧 Sending birthday email to {$member->email} for member #{$member->id}"
+                        );
+
+                        Mail::to($member->email)
+                            ->send(
+                                new \App\Mail\BirthdayWishMail(
+                                    $member,
+                                    $church,
+                                    $presbyter
+                                )
+                            );
+
+                        $this->log(
+                            'birthday',
+                            "✅ Birthday email sent to {$member->email}",
+                            'success'
+                        );
+                    } else {
+
+                        $this->log(
+                            'birthday',
+                            "⚠️ No email address for member #{$member->id}",
+                            'warning'
+                        );
+                    }
+
+                    /*
+        |--------------------------------------------------------------------------
+        | Birthday Greeting Record
+        |--------------------------------------------------------------------------
+        */
+
+                    BirthdayGreeting::create([
+                        'member_id' => $member->id,
+                        'greeted_on' => $today,
+                        'greeted_year' => $year,
+                        'email_sent' => !empty($member->email),
+                        'whatsapp_sent' => false,
+                    ]);
+
                     $this->log(
                         'birthday',
-                        "📧 Email sent to {$member->email}",
+                        "📝 BirthdayGreeting created for member #{$member->id}",
                         'success'
                     );
+
+                    /*
+        |--------------------------------------------------------------------------
+        | Message Inbox Entry
+        |--------------------------------------------------------------------------
+        */
+
+                    $greetings =
+                        "Happy Birthday " .
+                        $member->first_name .
+                        "XYZ Church wishes you a very Happy Birthday. and may GOD bless you in your life";
+
+                    $message = Message::create([
+                        'member_id' => $member->id,
+                        'title' => 'Happy Birthday 🎉',
+                        'body' => $greetings,
+                        'message_type' => 'birthday',
+                        'image_path' => $member->profile_photo,
+                        'is_published' => 1,
+                        'published_at' => now(),
+                    ]);
+
+                    $this->log(
+                        'birthday',
+                        "📨 Birthday inbox message created for member #{$member->id}, message #{$message->id}",
+                        'success'
+                    );
+
+                    /*
+        |--------------------------------------------------------------------------
+        | Device Tokens
+        |--------------------------------------------------------------------------
+        */
+
+                    $tokens = DB::connection('tenant')
+                        ->table('device_tokens')
+                        ->where('member_id', $member->id)
+                        ->pluck('token')
+                        ->toArray();
+
+                    $this->log(
+                        'birthday',
+                        "📱 Found " . count($tokens) .
+                            " device token(s) for member #{$member->id}"
+                    );
+
+                    /*
+        |--------------------------------------------------------------------------
+        | Push Notification
+        |--------------------------------------------------------------------------
+        */
+
+                    if (!empty($tokens)) {
+
+                        ExpoPushService::send(
+                            $tokens,
+                            $message->title,
+                            $message->body,
+                            [
+                                'type' => 'birthday',
+                                'message_id' => $message->id,
+                            ]
+                        );
+
+                        $this->log(
+                            'birthday',
+                            "🔔 Push notification sent for member #{$member->id}",
+                            'success'
+                        );
+                    } else {
+
+                        $this->log(
+                            'birthday',
+                            "⚠️ No device tokens for member #{$member->id}",
+                            'warning'
+                        );
+                    }
+                } catch (\Throwable $e) {
+
+                    $this->log(
+                        'birthday',
+                        "❌ FAILED member #{$member->id} {$member->first_name}: {$e->getMessage()}",
+                        'error'
+                    );
+
+                    Log::error(
+                        'Birthday greeting failed for member',
+                        [
+                            'church_id' => $church->id,
+                            'church_code' => $church->church_code,
+                            'member_id' => $member->id,
+                            'member_name' => $member->first_name . ' ' . $member->last_name,
+                            'email' => $member->email,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString(),
+                        ]
+                    );
+
+                    throw $e;
                 }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Birthday Greeting Record
-                |--------------------------------------------------------------------------
-                */
-
-                BirthdayGreeting::create([
-                    'member_id' => $member->id,
-                    'greeted_on' => $today,
-                    'greeted_year' => $year,
-                    'email_sent' => true,
-                    'whatsapp_sent' => false,
-                ]);
-
-                /*
-                |--------------------------------------------------------------------------
-                | Message Inbox Entry
-                |--------------------------------------------------------------------------
-                */
-
-                $greetings =
-                    "Happy Birthday " .
-                    $member->first_name .
-                    "XYZ Church wishes you a very Happy Birthday . and may GOD bless you in your life";
-
-                $message = Message::create([
-                    'member_id' => $member->id,
-                    'title' => 'Happy Birthday 🎉',
-                    'body' => $greetings,
-                    'message_type' => 'birthday',
-                    'image_path' => $member->profile_photo,
-                    'is_published' => 1,
-                    'published_at' => now(),
-                ]);
-
-                /*
-                |--------------------------------------------------------------------------
-                | Device Tokens
-                |--------------------------------------------------------------------------
-                */
-
-                $tokens = DB::connection('tenant')
-                    ->table('device_tokens')
-                    ->where('member_id', $member->id)
-                    ->pluck('token')
-                    ->toArray();
-
-                /*
-                |--------------------------------------------------------------------------
-                | Push Notification
-                |--------------------------------------------------------------------------
-                */
-
-                ExpoPushService::send(
-                    $tokens,
-                    $message->title,
-                    $message->body,
-                    [
-                        'type' => 'birthday',
-                        'message_id' => $message->id,
-                    ]
-                );
             }
 
             /*
@@ -197,12 +281,6 @@ class BirthdayGreetingService
             );
         } catch (\Throwable $e) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Record Failed Run
-            |--------------------------------------------------------------------------
-            */
-
             DB::connection('tenant')
                 ->table('system_runs')
                 ->updateOrInsert(
@@ -223,9 +301,14 @@ class BirthdayGreetingService
             Log::error(
                 'Birthday cron failed',
                 [
+                    'church_id' => $church->id ?? null,
+                    'church_code' => $church->church_code ?? null,
                     'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                 ]
             );
+
+            throw $e;
         }
     }
 }

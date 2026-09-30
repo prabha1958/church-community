@@ -242,7 +242,7 @@
                             </div>
                             <div
                                 style="font-family:'Mulish',Arial,sans-serif; font-size:12px; line-height:20px; color:#AEB6DA;">
-                                {{ $church->church_name }} &bull; {{ $church->address }} {{ $churh->city }}<br>
+                                {{ $church->church_name }} &bull; {{ $church->address }} {{ $church->city }}<br>
                                 &bull; <a href="mailto:office@yourchurch.org"
                                     style="color:#D9C48A; text-decoration:underline;">{{ $church->email ?? '' }}</a>
                             </div>
