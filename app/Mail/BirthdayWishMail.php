@@ -4,8 +4,10 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-
 
 class BirthdayWishMail extends Mailable
 {
@@ -14,6 +16,7 @@ class BirthdayWishMail extends Mailable
     public $member;
     public $church;
     public $presbyter;
+    public $name;
 
     /**
      * Create a new message instance.
@@ -23,22 +26,53 @@ class BirthdayWishMail extends Mailable
         $this->member = $member;
         $this->church = $church;
         $this->presbyter = $presbyter;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Member name
+        |--------------------------------------------------------------------------
+        */
+
+        $name = trim(
+            collect([
+                $member->family_name ?? null,
+                $member->first_name ?? null,
+                $member->last_name ?? null,
+            ])
+                ->filter()
+                ->implode(' ')
+        );
+
+        $this->name = $name ?: ($member->name ?? 'Friend');
     }
 
     /**
-     * Build the message.
+     * Get the message envelope.
      */
-    public function build()
+    public function envelope(): Envelope
     {
-        $name = $this->member->family_name . ' ' . $this->member->first_name . ' ' . $this->member->last_name ?? ($this->member->name ?? 'Friend');
+        return new Envelope(
+            from: new Address(
+                $church->email ?? 'noreply@yourchurch.org',
+                $this->church->church_name
+            ),
+            subject: "Happy Birthday, {$this->name}!",
+        );
+    }
 
-        return $this->subject("Happy Birthday, {$name}!")
-            ->view('emails.birthday_wish') // create resources/views/emails/birthday_wish.blade.php
-            ->with([
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.birthday_wish',
+            with: [
                 'member' => $this->member,
                 'church' => $this->church,
                 'presbyter' => $this->presbyter,
-                'name' => $name,
-            ]);
+                'name' => $this->name,
+            ],
+        );
     }
 }

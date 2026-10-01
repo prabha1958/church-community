@@ -2,24 +2,94 @@
 
 namespace App\Mail;
 
+use App\Models\Church;
+use App\Models\Member;
+use App\Models\Pastor;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Member;
 
 class AnniversaryWishMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public Member $member) {}
+    public Member $member;
+    public Church $church;
+    public ?Pastor $presbyter;
 
-    public function build()
+    public string $name;
+    public string $churchLogoUrl;
+    public string $presbyterPhotoUrl;
+
+    public function __construct(
+        Member $member,
+        Church $church,
+        ?Pastor $presbyter = null
+    ) {
+        $this->member = $member;
+        $this->church = $church;
+        $this->presbyter = $presbyter;
+
+        $this->name = trim(
+            collect([
+                $member->family_name ?? null,
+                $member->first_name ?? null,
+                $member->last_name ?? null,
+            ])
+                ->filter()
+                ->implode(' ')
+        );
+
+        $this->name = $this->name ?: 'Friend';
+
+        $this->churchLogoUrl = $church->logo
+            ? asset('storage/' . $church->logo)
+            : '';
+
+        $this->presbyterPhotoUrl = '';
+
+        if ($presbyter && !empty($presbyter->photo)) {
+            $this->presbyterPhotoUrl =
+                asset('storage/' . $presbyter->photo);
+        }
+    }
+
+    public function envelope(): Envelope
     {
-        return $this->subject('Happy Wedding Anniversary 🎉')
-            ->view('emails.anniversary')
-            ->with('member', $this->member);
+        return new Envelope(
+            from: new Address(
+                config('mail.from.address'),
+                $this->church->church_name
+            ),
+
+            replyTo: $this->church->email
+                ? [
+                    new Address(
+                        $this->church->email,
+                        $this->church->church_name
+                    )
+                ]
+                : [],
+
+            subject: "Happy Wedding Anniversary, {$this->name}!",
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.anniversary',
+            with: [
+                'member' => $this->member,
+                'church' => $this->church,
+                'presbyter' => $this->presbyter,
+                'name' => $this->name,
+                'churchLogoUrl' => $this->churchLogoUrl,
+                'presbyterPhotoUrl' => $this->presbyterPhotoUrl,
+            ],
+        );
     }
 }

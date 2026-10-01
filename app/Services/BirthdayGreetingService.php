@@ -161,11 +161,17 @@ class BirthdayGreetingService
         | Message Inbox Entry
         |--------------------------------------------------------------------------
         */
+                    $name = $member->family_name . ' ' . $member->first_name . ' ' . $member->last_name ?? ($member->name ?? 'Friend');
 
                     $greetings =
-                        "Happy Birthday " .
-                        $member->first_name .
-                        "XYZ Church wishes you a very Happy Birthday. and may GOD bless you in your life";
+                        "Happy Birthday " . $name . ".\n\n" .
+
+
+                        "Grace and peace to you in the name of our Lord Jesus Christ.\n\n" .
+
+                        "On this special day, I join the entire church family in celebrating the gift of your life.\n\n" .
+
+                        "As you begin a new year, may the Lord renew your strength, crown your days with joy, open new doors of favour, and keep you and your household in good health and in His perfect peace.";
 
                     $message = Message::create([
                         'member_id' => $member->id,

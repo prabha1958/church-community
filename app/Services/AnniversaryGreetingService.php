@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\AnniversaryWishMail;
 use Illuminate\Support\Str;
+use App\Models\Church;
+use App\Models\Pastor;
 
 class AnniversaryGreetingService
 {
@@ -28,11 +30,12 @@ class AnniversaryGreetingService
             ]);
     }
 
-    public function run(Carbon $date, callable $log = null): void
+    public function run(Carbon $date, Church $church, callable $log = null): void
     {
         try {
 
             $today = Carbon::today();
+            $churchId = $church->id;
 
             $this->log(
                 'anniversary',
@@ -49,6 +52,15 @@ class AnniversaryGreetingService
                 'anniversary',
                 "💍 Found {$members->count()} member(s)"
             );
+
+
+            $church = Church::on('platform')
+                ->where('id', $churchId)
+                ->firstOrFail();
+
+            $presbyter = Pastor::where('order_no', 1)->first();
+
+
 
             foreach ($members as $member) {
 
@@ -67,7 +79,7 @@ class AnniversaryGreetingService
                     continue;
                 }
 
-                $messageText = $this->buildMessage($member);
+                $messageText = $this->buildMessage($member, $church, $presbyter);
 
                 $emailSent = false;
                 $whatsappSent = false;
@@ -77,7 +89,7 @@ class AnniversaryGreetingService
                     try {
 
                         Mail::to($member->email)
-                            ->send(new AnniversaryWishMail($member));
+                            ->send(new AnniversaryWishMail($member, $church, $presbyter));
 
                         $emailSent = true;
 
@@ -186,8 +198,9 @@ class AnniversaryGreetingService
         }
     }
 
-    protected function buildMessage(Member $member): string
+    protected function buildMessage($member, $church, $presbyter): string
     {
+
         $name = trim(
             $member->first_name . ' ' . $member->last_name
         );
@@ -197,19 +210,41 @@ class AnniversaryGreetingService
         $spouse = $member->spouse_name ?: 'your beloved spouse';
 
         $address = $member->gender === 'male'
-            ? 'Mr'
-            : 'Ms';
+            ? 'Mr.'
+            : 'Ms.';
+
+        $weddingYear = $member->wedding_date
+            ? Carbon::parse($member->wedding_date)->format('Y')
+            : 'the year of your wedding';
+
+        $yearsMarried = $weddingYear
+            ? Carbon::parse($member->wedding_date)->diffInYears(Carbon::today())
+            : null;
+        $anniversaryLine = $yearsMarried !== null
+            ? "💍 Celebrating {$yearsMarried} Years of Marriage — Wedding Year {$weddingYear}"
+            : '';
 
         return <<<MSG
-            🎉 Happy Wedding Anniversary, $address {$name}! 🎉
+🎉 Happy Wedding Anniversary, {$address} {$name}  🎉
 
-            May God Allmighty with His divine power and grace make your bond with
-            {$spouse} stronger and make it last for ever, wishing you both a
 
-            A HAPPY ANNIVERSARY
 
-            God bless you.
 
-            MSG;
+{$anniversaryLine}
+
+On this beautiful occasion of {$yearsMarried} years of marriage with {$spouse}, I extend my warmest greetings and prayers to you both on behalf of MODERN GIDEON CHURCH.
+
+We thank God for the years of love, companionship, faithfulness and togetherness that He has blessed you with. May the Lord continue to strengthen the bond you share and guide you as you walk together in His grace.
+
+May your home continue to be filled with love, understanding, peace and the joy of the Lord. May God bless you with many more wonderful years together and make your family a testimony of His unfailing faithfulness.
+
+🎊 Wishing you both a very Happy Wedding Anniversary! 🎊
+
+God bless you and your family abundantly.
+
+Yours in Christ,
+{$presbyter->name}
+
+MSG;
     }
 }

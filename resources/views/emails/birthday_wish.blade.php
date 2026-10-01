@@ -83,13 +83,12 @@
                         <td align="center" class="pad" bgcolor="#1F2A5A"
                             style="background-color:#1F2A5A; background-image:linear-gradient(160deg,#2B3A7A 0%,#1F2A5A 55%,#141C42 100%); padding:44px 40px 40px 40px;">
 
-                            <div
-                                style="font-family:Georgia,'Times New Roman',serif; font-size:26px; line-height:26px; color:#C9A24B; padding-bottom:14px;">
+                            <div>
                                 @if ($church->logo)
                                     <div style="text-align: center; margin-bottom: 20px;">
                                         <img src="{{ 'https://csiadmin.csimarital.in/storage/' . $church->logo }}"
                                             alt="{{ $church->church_name }}"
-                                            style="display:block; margin:0 auto; width:90px; max-width:90px; height:auto; border:0; outline:none; text-decoration:none;">
+                                            style="display:block; margin:0 auto; width:40px; max-width:90px; height:auto; border:0; outline:none; text-decoration:none;">
                                     </div>
                                 @endif
 
@@ -227,7 +226,7 @@
                             </div>
                             <div
                                 style="font-family:'Mulish',Arial,sans-serif; font-size:14px; line-height:22px; color:#6A7090;">
-                                {{ $church->name ?? 'Your Church' }}
+                                {{ $church->church_name ?? 'Your Church' }}
                             </div>
                         </td>
                     </tr>
