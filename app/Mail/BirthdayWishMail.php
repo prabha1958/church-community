@@ -53,7 +53,7 @@ class BirthdayWishMail extends Mailable
     {
         return new Envelope(
             from: new Address(
-                $church->email ?? 'noreply@yourchurch.org',
+                config('mail.from.address'),
                 $this->church->church_name
             ),
             subject: "Happy Birthday, {$this->name}!",

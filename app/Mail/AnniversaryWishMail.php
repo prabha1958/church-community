@@ -64,14 +64,14 @@ class AnniversaryWishMail extends Mailable
     {
         return new Envelope(
             from: new Address(
-                $this->church->email,
+                config('mail.from.address'),
                 $this->church->church_name
             ),
 
             replyTo: $this->church->email
                 ? [
                     new Address(
-                        $this->church->email,
+
                         $this->church->church_name
                     )
                 ]

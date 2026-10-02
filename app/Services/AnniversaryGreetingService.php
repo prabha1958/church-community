@@ -229,7 +229,7 @@ class AnniversaryGreetingService
             ? Carbon::parse($member->wedding_date)->diffInYears(Carbon::today())
             : null;
         $anniversaryLine = $yearsMarried !== null
-            ? "💍 Celebrating {$yearsMarried} Years of Marriage — Wedding Year {$weddingYear}"
+            ? "💍 Celebrating {$yearsMarried} Years of Marriage "
             : '';
 
         return <<<MSG
@@ -238,7 +238,7 @@ class AnniversaryGreetingService
 
 
 
-{$anniversaryLine}
+
 
 On this beautiful occasion of {$yearsMarried} years of marriage with {$spouse}, I extend my warmest greetings and prayers to you both on behalf of MODERN GIDEON CHURCH.
 
