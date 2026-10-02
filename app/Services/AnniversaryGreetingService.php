@@ -84,12 +84,20 @@ class AnniversaryGreetingService
                 $emailSent = false;
                 $whatsappSent = false;
 
+                $weddingYear = $member->wedding_date
+                    ? Carbon::parse($member->wedding_date)->format('Y')
+                    : 'the year of your wedding';
+
+                $yearsMarried = $weddingYear
+                    ? Carbon::parse($member->wedding_date)->diffInYears(Carbon::today())
+                    : null;
+
                 // 📧 Email
                 if ($member->email) {
                     try {
 
                         Mail::to($member->email)
-                            ->send(new AnniversaryWishMail($member, $church, $presbyter));
+                            ->send(new AnniversaryWishMail($member, $church, $presbyter, $yearsMarried));
 
                         $emailSent = true;
 

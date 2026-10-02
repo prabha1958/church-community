@@ -115,7 +115,7 @@
 
         .title {
             color: #191970;
-            font-size: 32px;
+            font-size: 38px;
             line-height: 1.2;
             margin: 0 0 12px;
             font-weight: bold;
@@ -124,7 +124,7 @@
 
         .couple-name {
             color: #9a6b00;
-            font-size: 22px;
+            font-size: 30px;
             font-weight: bold;
             margin: 0;
             font-family: 'Great Vibes', 'Brush Script MT', cursive;
@@ -259,7 +259,7 @@
                         <td class="header">
 
                             @if (!empty($churchLogoUrl))
-                                <img src="{{ 'http://localhost:8000/storage/' . $church->logo }}"
+                                <img src="{{ 'https://csiadmin.csimarital.in/storage/' . $church->logo }}"
                                     alt="{{ $church->church_name }}" class="logo">
                             @endif
 
@@ -287,11 +287,8 @@
                             </h1>
 
                             <p class="couple-name">
-                                {{ $member->first_name }}
+                                {{ $name }}
 
-                                @if (!empty($member->spouse_name))
-                                    &amp; {{ $member->spouse_name }}
-                                @endif
                             </p>
 
                         </td>
@@ -304,9 +301,7 @@
                             <p>
                                 Dear
                                 <strong>{{ $member->first_name }}</strong>
-                                @if (!empty($member->spouse_name))
-                                    and <strong>{{ $member->spouse_name }}</strong>
-                                @endif,
+
                             </p>
 
                             <p>
@@ -315,8 +310,9 @@
                             </p>
 
                             <p>
-                                On this beautiful occasion of your wedding
-                                anniversary, I extend my warmest greetings and
+                                On this beautiful occasion of your {{ $yearsMarried }}th wedding
+                                anniversary with {{ $member->spouse_name ?? 'your beloved spouse' }}, I extend my
+                                warmest greetings and
                                 prayers to you both on behalf of
                                 <strong>{{ $church->church_name }}</strong>.
                             </p>

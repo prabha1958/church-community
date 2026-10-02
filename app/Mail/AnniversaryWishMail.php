@@ -23,15 +23,18 @@ class AnniversaryWishMail extends Mailable
     public string $name;
     public string $churchLogoUrl;
     public string $presbyterPhotoUrl;
+    public int $yearsMarried;
 
     public function __construct(
         Member $member,
         Church $church,
-        ?Pastor $presbyter = null
+        ?Pastor $presbyter = null,
+        int $yearsMarried = 0
     ) {
         $this->member = $member;
         $this->church = $church;
         $this->presbyter = $presbyter;
+        $this->yearsMarried = $yearsMarried;
 
         $this->name = trim(
             collect([
@@ -87,8 +90,8 @@ class AnniversaryWishMail extends Mailable
                 'church' => $this->church,
                 'presbyter' => $this->presbyter,
                 'name' => $this->name,
-                'churchLogoUrl' => $this->churchLogoUrl,
-                'presbyterPhotoUrl' => $this->presbyterPhotoUrl,
+                'yearsMarried' => $this->yearsMarried,
+
             ],
         );
     }
