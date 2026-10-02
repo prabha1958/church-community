@@ -97,7 +97,7 @@ class AnniversaryGreetingService
                     try {
 
                         Mail::to($member->email)
-                            ->send(new AnniversaryWishMail($member, $church, $presbyter, $yearsMarried));
+                            ->queue(new AnniversaryWishMail($member, $church, $presbyter, $yearsMarried));
 
                         $emailSent = true;
 

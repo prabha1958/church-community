@@ -64,7 +64,7 @@ class AnniversaryWishMail extends Mailable
     {
         return new Envelope(
             from: new Address(
-                config('mail.from.address'),
+                $this->church->email,
                 $this->church->church_name
             ),
 
