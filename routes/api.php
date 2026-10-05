@@ -91,7 +91,7 @@ Route::middleware('tenant')->group(function () {
 Route::middleware([
     'tenant',
     'auth:sanctum',
-    'licanse'
+    'licence'
 
 ])->group(function () {
 
@@ -228,7 +228,7 @@ Route::middleware([
 Route::middleware([
     'tenant',
     'auth:sanctum',
-    'licence',
+    'license',
     'admin'
 ])->prefix('admin')->name('admin.')->group(function () {
 
