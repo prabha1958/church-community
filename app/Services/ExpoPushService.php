@@ -26,7 +26,7 @@ class ExpoPushService
             $messages = collect($chunk)->map(function ($token) use ($title, $body, $data) {
                 return [
                     'to' => $token,
-                    'sound' => 'default',
+                    'sound' => 'notification_bell.wav',
                     'title' => $title,
                     'body' => $body,
                     'data' => $data,
