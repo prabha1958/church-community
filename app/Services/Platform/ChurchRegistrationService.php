@@ -5,7 +5,7 @@ namespace App\Services\Platform;
 use App\Models\Church;
 use App\Services\TenantProvisioningService;
 use Illuminate\Support\Str;
-use app\Services\LicenseService;
+use app\Services\Platform\LicenseService;
 
 class ChurchRegistrationService
 {
