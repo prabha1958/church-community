@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin'  => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'platform.auth' => \App\Http\Middleware\PlatformAuthenticate::class,
             'platform.tenant' => \App\Http\Middleware\PlatformTenant::class,
+            'license' => \App\Http\Middleware\CheckLicense::class,
         ]);
 
         /*

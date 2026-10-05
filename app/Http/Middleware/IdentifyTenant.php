@@ -72,6 +72,8 @@ class IdentifyTenant
             ], 400);
         }
 
+
+
         /*
         |--------------------------------------------------------------------------
         | Find church
@@ -90,6 +92,7 @@ class IdentifyTenant
                 'error' => 'TENANT_NOT_FOUND',
             ], 404);
         }
+        $request->attributes->set('church', $church);
 
         /*
         |--------------------------------------------------------------------------

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\License;
 
 
 class Church extends Model
@@ -60,5 +61,12 @@ class Church extends Model
     public function platformUsers(): HasMany
     {
         return $this->hasMany(PlatformUser::class);
+    }
+
+    public function activeLicense()
+    {
+        return $this->hasOne(License::class)
+            ->where('status', 'active')
+            ->latestOfMany('activation_date');
     }
 }

@@ -235,11 +235,6 @@ class AnniversaryGreetingService
         return <<<MSG
 🎉 Happy Wedding Anniversary, {$address} {$name}  🎉
 
-
-
-
-
-
 On this beautiful occasion of {$yearsMarried} years of marriage with {$spouse}, I extend my warmest greetings and prayers to you both on behalf of MODERN GIDEON CHURCH.
 
 We thank God for the years of love, companionship, faithfulness and togetherness that He has blessed you with. May the Lord continue to strengthen the bond you share and guide you as you walk together in His grace.

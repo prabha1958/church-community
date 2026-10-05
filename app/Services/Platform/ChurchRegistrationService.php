@@ -5,12 +5,15 @@ namespace App\Services\Platform;
 use App\Models\Church;
 use App\Services\TenantProvisioningService;
 use Illuminate\Support\Str;
+use app\Services\LicenseService;
 
 class ChurchRegistrationService
 {
     public function __construct(
-        private TenantProvisioningService $tenantProvisioningService
+        private TenantProvisioningService $tenantProvisioningService,
+        private LicenseService $licenseService
     ) {}
+
 
     /**
      * Register a church and provision its tenant database.
@@ -75,6 +78,11 @@ class ChurchRegistrationService
 
             'activated_at' => null,
         ]);
+
+        $license = $this->licenseService->createTrial(
+            $church,
+            180
+        );
 
         /*
          * This creates:

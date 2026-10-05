@@ -24,3 +24,6 @@ Schedule::command('send:birthday-wishes')
 Schedule::command('greetings:anniversary')
     ->dailyAt('08:10')
     ->withoutOverlapping();
+
+Schedule::command('licenses:expire')
+    ->dailyAt('00:10');

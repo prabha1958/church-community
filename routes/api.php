@@ -43,6 +43,8 @@ use App\Http\Controllers\Platform\PlatformAuthController;
 use App\Http\Controllers\Platform\PlatformOnboardingController;
 use App\Http\Controllers\Platform\PlatformMemberController;
 use App\Http\Controllers\ChurchInfoController;
+use App\Http\Controllers\Api\ChurchLicenseController;
+use App\Http\Controllers\Platform\LicenseController;
 
 
 // ============================================================
@@ -88,7 +90,8 @@ Route::middleware('tenant')->group(function () {
 
 Route::middleware([
     'tenant',
-    'auth:sanctum'
+    'auth:sanctum',
+    'license',
 ])->group(function () {
 
 
@@ -224,6 +227,7 @@ Route::middleware([
 Route::middleware([
     'tenant',
     'auth:sanctum',
+    'license',
     'admin'
 ])->prefix('admin')->name('admin.')->group(function () {
 
@@ -714,7 +718,46 @@ Route::get('/church', [
     'show',
 ])->name('church.info');
 
+Route::get(
+    '/church/license',
+    [ChurchLicenseController::class, 'show']
+);
 
+
+Route::middleware('platform.auth')
+    ->prefix('platform')
+    ->group(function () {
+
+        Route::get(
+            '/licenses',
+            [LicenseController::class, 'index']
+        );
+
+        Route::get(
+            '/licenses/{license}',
+            [LicenseController::class, 'show']
+        );
+
+        Route::post(
+            '/licenses',
+            [LicenseController::class, 'store']
+        );
+
+        Route::post(
+            '/licenses/{license}/renew',
+            [LicenseController::class, 'renew']
+        );
+
+        Route::post(
+            '/licenses/{license}/suspend',
+            [LicenseController::class, 'suspend']
+        );
+
+        Route::post(
+            '/licenses/{license}/cancel',
+            [LicenseController::class, 'cancel']
+        );
+    });
 
 // ============================================================
 // HEALTH CHECK

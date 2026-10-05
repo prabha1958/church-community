@@ -163,20 +163,12 @@ class BirthdayGreetingService
         */
                     $name = $member->family_name . ' ' . $member->first_name . ' ' . $member->last_name ?? ($member->name ?? 'Friend');
 
-                    $greetings =
-                        "Happy Birthday " . $name . ".\n\n" .
-
-
-                        "Grace and peace to you in the name of our Lord Jesus Christ.\n\n" .
-
-                        "On this special day, I join the entire church family in celebrating the gift of your life.\n\n" .
-
-                        "As you begin a new year, may the Lord renew your strength, crown your days with joy, open new doors of favour, and keep you and your household in good health and in His perfect peace.";
+                    $messageText = $this->buildMessage($member, $church, $presbyter);
 
                     $message = Message::create([
                         'member_id' => $member->id,
                         'title' => 'Happy Birthday 🎉',
-                        'body' => $greetings,
+                        'body' => $messageText,
                         'message_type' => 'birthday',
                         'image_path' => $member->profile_photo,
                         'is_published' => 1,
@@ -316,5 +308,47 @@ class BirthdayGreetingService
 
             throw $e;
         }
+    }
+
+    protected function buildMessage($member, $church, $presbyter): string
+    {
+
+        $name = trim(
+            $member->first_name . ' ' . $member->last_name
+        );
+
+        $name = $name ?: 'Friend';
+
+        $spouse = $member->spouse_name ?: 'your beloved spouse';
+
+        $address = $member->gender === 'male'
+            ? 'Mr.'
+            : 'Ms.';
+
+        $weddingYear = $member->wedding_date
+            ? Carbon::parse($member->wedding_date)->format('Y')
+            : 'the year of your wedding';
+
+        $yearsMarried = $weddingYear
+            ? Carbon::parse($member->wedding_date)->diffInYears(Carbon::today())
+            : null;
+        $anniversaryLine = $yearsMarried !== null
+            ? "💍 Celebrating {$yearsMarried} Years of Marriage "
+            : '';
+
+        return <<<MSG
+🎉 Happy Birthday, {$address} {$name}  🎉
+
+ Grace and peace to you in the name of or Lor d Jesus Christ.
+
+ On this special day, I join the entire church family in celebrating the gift of your life.
+
+ As you begin a new year, may the Lord renew your strength, crown your days with joy
+, open new doors of favour, and keep you and your household in good health and in His perfect peace.
+
+Yours in Christ,
+{$presbyter->name}
+
+MSG;
     }
 }
