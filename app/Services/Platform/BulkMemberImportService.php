@@ -11,9 +11,21 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Services\MemberLimitService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class BulkMemberImportService
 {
+
+    protected MemberLimitService $memberLimitService;
+
+    public function __construct(
+        MemberLimitService $memberLimitService
+    ) {
+        $this->memberLimitService = $memberLimitService;
+    }
+
     public const REQUIRED_CSV_COLUMNS = [
         'family_name',
         'first_name',
@@ -39,6 +51,8 @@ class BulkMemberImportService
         'address_city',
         'address_pin',
     ];
+
+
 
     public const ALL_CSV_COLUMNS = [
         'family_name',
@@ -307,6 +321,8 @@ class BulkMemberImportService
 
                 $databaseDuplicates = [];
 
+
+
                 foreach ($validRows as $item) {
                     $rowNumber = $item['row_number'];
                     $data = $item['data'];
@@ -346,10 +362,23 @@ class BulkMemberImportService
                     );
                 }
 
+
+                /*
+ * Check the tenant member limit.
+ *
+ * This must happen inside the existing transaction
+ * and immediately before creating the members.
+ */
+                $this->memberLimitService->ensureCanAddInsideTransaction(
+                    count($validRows)
+                );
+
                 /*
                  * Create the members.
                  */
                 $created = 0;
+
+
 
                 foreach ($validRows as $item) {
                     $data = $this->prepareMemberData(

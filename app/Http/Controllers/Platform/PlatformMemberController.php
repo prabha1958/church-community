@@ -20,13 +20,15 @@ use Carbon\Carbon;
 use App\Services\Platform\BulkMemberImportService;
 use App\Exceptions\BulkMemberImportException;
 
+
 class PlatformMemberController extends Controller
 {
 
 
     public function store(
         StoreMemberRequest $request,
-        TenantConnectionService $tenantConnectionService
+        TenantConnectionService $tenantConnectionService,
+
     ): JsonResponse {
         $user = $request->user();
 
@@ -288,54 +290,57 @@ class PlatformMemberController extends Controller
         }
     }
 
-    public function import(
-        BulkMemberImportRequest $request,
-        BulkMemberImportService $importService
-    ): JsonResponse {
+    public function import(Request $request,   BulkMemberImportService $bulkMemberImportService): JsonResponse
+    {
+        $request->validate([
+            'file' => [
+                'required',
+                'file',
+                'mimes:csv,txt',
+            ],
+        ]);
+
         try {
-            $result = $importService->import(
+
+            $result = $bulkMemberImportService->import(
                 $request->file('file')
             );
 
             return response()->json([
                 'success' => true,
-                'message' =>
-                "{$result['created']} members imported successfully.",
-                'data' => $result,
-            ], 201);
+                'message' => 'Members imported successfully.',
+                'data' => [
+                    'created' => $result['created'],
+                ],
+            ], 200);
         } catch (BulkMemberImportException $e) {
+
+            /*
+         * CSV validation errors, duplicate members,
+         * database duplicate checks, etc.
+         *
+         * These errors contain row-level information.
+         */
             return response()->json([
                 'success' => false,
+                'code' => 'IMPORT_VALIDATION_FAILED',
                 'message' => $e->getMessage(),
-                'data' => [
-                    'rows' => $e->rows(),
-                ],
+                'errors' => $e->getErrors(),
             ], 422);
         } catch (\RuntimeException $e) {
+
+            /*
+         * Member limit exceeded.
+         *
+         * This is thrown by:
+         *
+         * MemberLimitService::ensureCanAddInsideTransaction()
+         */
             return response()->json([
                 'success' => false,
+                'code' => 'MEMBER_LIMIT_REACHED',
                 'message' => $e->getMessage(),
             ], 422);
-        } catch (\Illuminate\Database\QueryException $e) {
-            Log::error('Bulk member import database constraint failed', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' =>
-                'A member with the same email or mobile number was created while this import was being processed. No members were imported.',
-            ], 422);
-        } catch (\Throwable $e) {
-            Log::error('Bulk member import failed', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' =>
-                'Unable to import members. No members were imported.',
-            ], 500);
         }
     }
 }

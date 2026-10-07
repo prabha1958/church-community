@@ -15,15 +15,18 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use App\Services\AdminActionLogger;
 use App\Models\Message;
+use App\Services\MemberLimitService;
 
 class MemberController extends Controller
 
 {
-    public function store(StoreMemberRequest $request)
+    public function store(StoreMemberRequest $request,   MemberLimitService $memberLimit)
     {
         $data = $request->validated();
 
-        Log::info("Controller reached");
+        $memberLimit->ensureCanAdd(1);
+
+
 
         // handle profile photo if your app uses it
         if ($request->hasFile('profile_photo')) {

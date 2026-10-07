@@ -6,15 +6,30 @@ use Exception;
 
 class BulkMemberImportException extends Exception
 {
+    protected array $errors;
+
     public function __construct(
         string $message,
-        protected array $rows = []
+        array $errors = []
     ) {
         parent::__construct($message);
+
+        $this->errors = $errors;
     }
 
+    /**
+     * Return row-level validation errors.
+     */
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
+
+    /**
+     * Backward compatibility with existing CSV import code.
+     */
     public function rows(): array
     {
-        return $this->rows;
+        return $this->errors;
     }
 }
