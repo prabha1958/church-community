@@ -40,7 +40,7 @@ return [
             'PLATFORM_FRONTEND_URL',
             'http://localhost:3000'
         ),
-        'owner_mail' => env(
+        'owner_email' => env(
             'PLATFORM_OWNER_MAIL',
             'platform@localhost'
         )
