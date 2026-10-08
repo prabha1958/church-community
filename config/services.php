@@ -35,6 +35,13 @@ return [
         ],
     ],
 
+    'platform' => [
+        'frontend_url' => env(
+            'PLATFORM_FRONTEND_URL',
+            'http://localhost:3000'
+        ),
+    ],
+
     'razorpay' => [
         'key' => env('RAZORPAY_KEY'),
         'secret' => env('RAZORPAY_SECRET'),

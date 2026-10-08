@@ -45,6 +45,7 @@ use App\Http\Controllers\Platform\PlatformMemberController;
 use App\Http\Controllers\ChurchInfoController;
 use App\Http\Controllers\Api\ChurchLicenseController;
 use App\Http\Controllers\Platform\LicenseController;
+use App\Http\Controllers\Platform\ChurchRegistrationRequestController;
 
 
 // ============================================================
@@ -712,6 +713,18 @@ Route::prefix('onboarding')->group(function () {
         'setup-admin',
         [PlatformOnboardingController::class, 'createSetupAdmin']
     );
+
+
+
+    Route::post(
+        'register',
+        [PlatformOnboardingController::class, 'register']
+    )->name('platform.onboarding.register');
+
+    Route::post(
+        'setup-admin',
+        [PlatformOnboardingController::class, 'createSetupAdmin']
+    );
 });
 
 Route::get('/church', [
@@ -759,6 +772,12 @@ Route::middleware('platform.auth')
             [LicenseController::class, 'cancel']
         );
     });
+
+
+Route::post(
+    '/church-registration-requests',
+    [ChurchRegistrationRequestController::class, 'store']
+)->name('church-registration-requests.store');
 
 // ============================================================
 // HEALTH CHECK
