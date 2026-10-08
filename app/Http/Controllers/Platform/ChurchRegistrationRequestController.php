@@ -193,4 +193,105 @@ class ChurchRegistrationRequestController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * List church registration requests.
+     *
+     * By default, only pending requests are returned.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $status = $request->input('status', 'pending');
+
+        if (!in_array($status, ['pending', 'approved', 'rejected'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid registration request status.',
+            ], 422);
+        }
+
+        $requests = ChurchRegistrationRequest::on('platform')
+            ->where('status', $status)
+            ->orderByDesc('created_at')
+            ->paginate(20);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'requests' => $requests,
+            ],
+        ]);
+    }
+
+
+    /**
+     * Approve a registration request.
+     *
+     * This stage only records the approval.
+     * Tenant provisioning will be connected in the next step.
+     */
+    public function approve(
+        Request $request,
+        ChurchRegistrationRequest $registrationRequest
+    ): JsonResponse {
+        if ($registrationRequest->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only pending registration requests can be approved.',
+            ], 422);
+        }
+
+        $registrationRequest->update([
+            'status' => 'approved',
+            'reviewed_at' => now(),
+            'reviewed_by' => $request->user()?->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Church registration request approved successfully.',
+            'data' => [
+                'registration_request' => $registrationRequest->fresh(),
+            ],
+        ]);
+    }
+
+
+    /**
+     * Reject a registration request.
+     */
+    public function reject(
+        Request $request,
+        ChurchRegistrationRequest $registrationRequest
+    ): JsonResponse {
+        if ($registrationRequest->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only pending registration requests can be rejected.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'admin_notes' => [
+                'nullable',
+                'string',
+                'max:5000',
+            ],
+        ]);
+
+        $registrationRequest->update([
+            'status' => 'rejected',
+            'reviewed_at' => now(),
+            'reviewed_by' => $request->user()?->id,
+            'admin_notes' => $validated['admin_notes'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Church registration request rejected.',
+            'data' => [
+                'registration_request' => $registrationRequest->fresh(),
+            ],
+        ]);
+    }
 }
