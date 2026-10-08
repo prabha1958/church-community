@@ -701,17 +701,17 @@ Route::middleware('platform.auth')->group(function () {
     ])->middleware('platform.tenant');
 
     Route::get(
-        '/church-registration-requests',
+        'platform/church-registration-requests',
         [ChurchRegistrationRequestController::class, 'index']
     )->name('platform.church-registration-requests.index');
 
     Route::post(
-        '/church-registration-requests/{registrationRequest}/approve',
+        'platform/church-registration-requests/{registrationRequest}/approve',
         [ChurchRegistrationRequestController::class, 'approve']
     )->name('platform.church-registration-requests.approve');
 
     Route::post(
-        '/church-registration-requests/{registrationRequest}/reject',
+        'platform/church-registration-requests/{registrationRequest}/reject',
         [ChurchRegistrationRequestController::class, 'reject']
     )->name('platform.church-registration-requests.reject');
 });
