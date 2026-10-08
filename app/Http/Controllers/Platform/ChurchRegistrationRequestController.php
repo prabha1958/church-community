@@ -10,8 +10,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+
 class ChurchRegistrationRequestController extends Controller
 {
+
+
+
     /**
      * Submit a new church registration request.
      *
@@ -20,6 +24,8 @@ class ChurchRegistrationRequestController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+
+        Log::info('CHURCH REGISTRATION CONTROLLER REACHED');
         /*
          * ---------------------------------------------------------
          * 1. Validate request
