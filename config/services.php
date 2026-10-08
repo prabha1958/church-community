@@ -40,6 +40,10 @@ return [
             'PLATFORM_FRONTEND_URL',
             'http://localhost:3000'
         ),
+        'owner_mail' => env(
+            'PLATFORM_OWNER_MAIL',
+            'platform@localhost'
+        )
     ],
 
     'razorpay' => [
