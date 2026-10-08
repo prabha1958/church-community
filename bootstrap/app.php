@@ -22,13 +22,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'platform.tenant' => \App\Http\Middleware\PlatformTenant::class,
             'license' => \App\Http\Middleware\CheckLicense::class,
         ]);
-
-        /*
-         * Tenant identification must happen before authentication.
-         */
-        $middleware->prependToGroup('api', [
-            \App\Http\Middleware\IdentifyTenant::class,
-        ]);
     })
 
     ->withExceptions(function (Exceptions $exceptions): void {
