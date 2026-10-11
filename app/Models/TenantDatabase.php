@@ -36,6 +36,7 @@ class TenantDatabase extends Model
             'church_id' => 'integer',
             'database_port' => 'integer',
             'provisioned_at' => 'datetime',
+            'database_password' => 'encrypted',
         ];
     }
 

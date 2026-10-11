@@ -538,6 +538,7 @@ class BulkMemberImportService
     {
         $data = [];
 
+
         foreach (self::ALL_CSV_COLUMNS as $column) {
             $value = $row[$column] ?? null;
 
@@ -545,11 +546,15 @@ class BulkMemberImportService
                 $value = trim($value);
             }
 
-            $data[$column] =
-                $value === ''
-                ? null
-                : $value;
+            if ($column === 'middle_name') {
+                $value = $this->normalizeNullableValue($value);
+            } else {
+                $value = $value === '' ? null : $value;
+            }
+
+            $data[$column] = $value;
         }
+
 
         $validator = Validator::make(
             $data,
@@ -898,5 +903,21 @@ class BulkMemberImportService
             $data,
             fn($value) => $value !== null
         );
+    }
+
+
+    private function normalizeNullableValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+
+        if ($value === '' || strtoupper($value) === 'NULL') {
+            return null;
+        }
+
+        return $value;
     }
 }

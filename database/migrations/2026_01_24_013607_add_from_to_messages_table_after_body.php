@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-            $table->string('from')->default('Presbitor-in-charge');
+            $table->string('from')->after('body')
+                ->nullable();
         });
     }
 

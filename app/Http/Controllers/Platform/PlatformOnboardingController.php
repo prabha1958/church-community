@@ -18,12 +18,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use RuntimeException;
+use App\Mail\SetupAdminWelcomeMail;
 
 
 class PlatformOnboardingController extends Controller
 {
     public function __construct(
-        private ChurchRegistrationService $churchRegistrationService
+        private ChurchRegistrationService $churchRegistrationService,
+        private SetupAdminService $setupAdminService
     ) {}
 
     /**
@@ -34,17 +36,18 @@ class PlatformOnboardingController extends Controller
      * a secure one-time setup-admin link is emailed to the
      * applicant.
      */
+
     public function register(
         ChurchRegistrationRequest $request
     ): JsonResponse {
         $validated = $request->validated();
 
         /*
-         * ---------------------------------------------------------
-         * 1. Find the original registration request, if supplied
-         * ---------------------------------------------------------
-         */
+     * 1. Find the original registration request, if supplied.
+     */
         $registrationRequest = null;
+
+
 
         if (!empty($validated['registration_request_id'])) {
             $registrationRequest = ChurchRegistrationRequestModel::on('platform')
@@ -55,31 +58,102 @@ class PlatformOnboardingController extends Controller
             if (!$registrationRequest) {
                 return response()->json([
                     'success' => false,
-                    'message' =>
-                    'The church registration request is invalid, already processed, or no longer available.',
+                    'message' => 'The church registration request is invalid, already processed, or no longer available.',
                 ], 422);
             }
         }
 
-        try {
+        /*
+     * 2. Determine the setup administrator's details.
+     *
+     * Prefer the details from the stored registration request
+     * when one is supplied.
+     */
+        $adminName = trim($validated['admin_name'] ?? '');
+        $adminEmail = strtolower(trim($validated['admin_email'] ?? ''));
 
+        // If an original registration request is supplied,
+        // use its stored administrator details as the trusted source.
+        if ($registrationRequest) {
+            $adminName = trim($registrationRequest->admin_name ?? '');
+            $adminEmail = strtolower(
+                trim($registrationRequest->admin_email ?? '')
+            );
+        }
+
+        if (
+            $adminName === '' ||
+            !filter_var($adminEmail, FILTER_VALIDATE_EMAIL)
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A valid setup administrator name and email are required.',
+            ], 422);
+        }
+
+        $adminName = trim($adminName);
+        $adminEmail = strtolower(trim($adminEmail));
+
+        try {
             /*
-             * ---------------------------------------------------------
-             * 2. Register the church
-             *
-             * This continues to use the existing service responsible
-             * for church registration and tenant provisioning.
-             * ---------------------------------------------------------
-             */
+         * 3. Register the church and provision its tenant.
+         */
             $church = $this->churchRegistrationService->register(
                 $validated
             );
 
             /*
-             * ---------------------------------------------------------
-             * 3. Mark the original registration request as approved
-             * ---------------------------------------------------------
-             */
+         * 4. Create the setup administrator.
+         *
+         * The church must already be active. Your existing
+         * ChurchRegistrationService should complete provisioning
+         * before this method is called.
+         */
+            $setupAdmin = $this->setupAdminService->createForOnboarding(
+                $church,
+                $adminName,
+                $adminEmail
+            );
+
+            /*
+         * 5. Queue the welcome email.
+         *
+         * Do not return the temporary password in the API response.
+         */
+            $emailQueued = false;
+
+            try {
+
+                $loginUrl = config('services.platform.frontend_url') . '/platform/login';
+                $logoUrl = config('services.platform.frontend_url') . '/logo.png';
+                Mail::to($setupAdmin['user']->email)->queue(
+                    new SetupAdminWelcomeMail(
+                        $setupAdmin['user'],
+                        $church,
+                        $setupAdmin['temporary_password'],
+                        $loginUrl,
+                        $logoUrl
+                    )
+                );
+
+                $emailQueued = true;
+            } catch (\Throwable $mailException) {
+                Log::error(
+                    'Church registered and setup administrator created, but the welcome email could not be queued.',
+                    [
+                        'church_id' => $church->id,
+                        'church_code' => $church->church_code,
+                        'setup_admin_id' => $setupAdmin['user']->id,
+                        'admin_email' => $setupAdmin['user']->email,
+                        'error' => $mailException->getMessage(),
+                    ]
+                );
+            }
+
+            /*
+         * 6. Mark the original registration request approved
+         * only after the church and setup administrator exist.
+         */
             if ($registrationRequest) {
                 $registrationRequest->forceFill([
                     'status' => 'approved',
@@ -89,87 +163,51 @@ class PlatformOnboardingController extends Controller
             }
 
             /*
-             * ---------------------------------------------------------
-             * 4. Send secure setup-admin link
-             *
-             * Do not allow email failure to make the church
-             * registration itself appear unsuccessful.
-             * ---------------------------------------------------------
-             */
-            if ($registrationRequest) {
-                try {
-                    $this->sendSetupAdminLink(
-                        $registrationRequest,
-                        $church
-                    );
-                } catch (\Throwable $mailException) {
-
-                    Log::error(
-                        'Church registered but setup-admin email could not be sent.',
-                        [
-                            'church_id' =>
-                            $church->id,
-
-                            'church_code' =>
-                            $church->church_code,
-
-                            'registration_request_id' =>
-                            $registrationRequest->id,
-
-                            'admin_email' =>
-                            $registrationRequest->admin_email,
-
-                            'error' =>
-                            $mailException->getMessage(),
-                        ]
-                    );
-                }
-            }
-
-            /*
-             * ---------------------------------------------------------
-             * 5. Return successful registration response
-             * ---------------------------------------------------------
-             */
+         * 7. Return the result.
+         */
             return response()->json([
                 'success' => true,
-                'message' =>
-                'Church registered successfully.',
+                'message' => $emailQueued
+                    ? 'Church registered and setup administrator created. Welcome email queued.'
+                    : 'Church registered and setup administrator created, but the welcome email could not be queued.',
 
                 'data' => [
                     'church' => [
-                        'id' =>
-                        $church->id,
-
-                        'church_name' =>
-                        $church->church_name,
-
-                        'short_name' =>
-                        $church->short_name,
-
-                        'church_code' =>
-                        $church->church_code,
-
-                        'status' =>
-                        $church->status,
+                        'id' => $church->id,
+                        'church_name' => $church->church_name,
+                        'short_name' => $church->short_name,
+                        'church_code' => $church->church_code,
+                        'status' => $church->status,
                     ],
 
-                    'setup_admin_email_sent' =>
-                    $registrationRequest !== null,
+                    'setup_admin' => [
+                        'id' => $setupAdmin['user']->id,
+                        'name' => $setupAdmin['user']->name,
+                        'email' => $setupAdmin['user']->email,
+                        'must_change_password' => true,
+                    ],
+
+                    'setup_admin_created' => true,
+                    'setup_admin_email_queued' => $emailQueued,
                 ],
             ], 201);
         } catch (\Throwable $e) {
-
             report($e);
+
+            Log::error('Church onboarding failed.', [
+                'registration_request_id' =>
+                $registrationRequest?->id,
+                'admin_email' => $adminEmail,
+                'error' => $e->getMessage(),
+            ]);
 
             return response()->json([
                 'success' => false,
-                'message' =>
-                'Unable to complete church registration. '
-                    . 'Please try again.',
+                'message' => 'Unable to complete church registration. Please check the server logs before retrying.',
             ], 500);
         }
     }
+
 
     /**
      * Generate a secure, one-time setup-admin token and
@@ -255,7 +293,7 @@ class PlatformOnboardingController extends Controller
 
         $setupUrl =
             $frontendUrl
-            . '/platform/setup-admin?token='
+            . '/platform/login?token='
             . urlencode($rawToken);
 
         /*

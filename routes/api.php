@@ -75,6 +75,22 @@ Route::middleware('tenant')->group(function () {
         MessageAuthController::class,
         'login'
     ]);
+
+    Route::post('member/verify-otp', [
+        MessageAuthController::class,
+        'verifyOtp',
+    ]);
+
+
+    Route::get('/church', [
+        ChurchInfoController::class,
+        'show',
+    ])->name('church.info');
+
+    Route::get(
+        '/church/license',
+        [ChurchLicenseController::class, 'show']
+    );
 });
 
 
@@ -714,43 +730,25 @@ Route::middleware('platform.auth')->group(function () {
         'platform/church-registration-requests/{registrationRequest}/reject',
         [ChurchRegistrationRequestController::class, 'reject']
     )->name('platform.church-registration-requests.reject');
-});
 
-
-
-Route::prefix('onboarding')->group(function () {
-    Route::post(
-        'register',
-        [PlatformOnboardingController::class, 'register']
-    )->name('platform.onboarding.register');
-
-    Route::post(
-        'setup-admin',
-        [PlatformOnboardingController::class, 'createSetupAdmin']
+    Route::get(
+        'platform/registration-requests/{registrationRequest}',
+        [ChurchRegistrationRequestController::class, 'showForOnboarding']
     );
 
-
-
     Route::post(
         'register',
         [PlatformOnboardingController::class, 'register']
     )->name('platform.onboarding.register');
-
     Route::post(
         'setup-admin',
         [PlatformOnboardingController::class, 'createSetupAdmin']
     );
 });
 
-Route::get('/church', [
-    ChurchInfoController::class,
-    'show',
-])->name('church.info');
 
-Route::get(
-    '/church/license',
-    [ChurchLicenseController::class, 'show']
-);
+
+
 
 
 Route::middleware('platform.auth')
@@ -793,6 +791,16 @@ Route::post(
     '/church-registration-requests',
     [ChurchRegistrationRequestController::class, 'store']
 )->name('church-registration-requests.store');
+
+
+Route::patch(
+    'platform/members/{member}/role',
+    [
+        \App\Http\Controllers\Platform\PlatformMemberController::class,
+        'updateRole',
+    ]
+)->middleware('platform.auth')
+    ->whereNumber('member');
 
 // ============================================================
 // HEALTH CHECK

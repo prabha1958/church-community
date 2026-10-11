@@ -294,4 +294,31 @@ class ChurchRegistrationRequestController extends Controller
             ],
         ]);
     }
+
+
+    public function showForOnboarding(
+        ChurchRegistrationRequest $registrationRequest
+    ) {
+        if ($registrationRequest->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This registration request is no longer pending.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $registrationRequest->id,
+                'church_name' => $registrationRequest->church_name,
+                'address' => $registrationRequest->address,
+                'city' => $registrationRequest->city,
+                'state' => $registrationRequest->state,
+                'country' => $registrationRequest->country,
+                'admin_name' => $registrationRequest->admin_name,
+                'admin_email' => $registrationRequest->admin_email,
+                'admin_phone' => $registrationRequest->admin_phone,
+            ],
+        ]);
+    }
 }

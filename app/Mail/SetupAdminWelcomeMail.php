@@ -17,6 +17,8 @@ class SetupAdminWelcomeMail extends Mailable implements ShouldQueue
         public PlatformUser $user,
         public Church $church,
         public string $temporaryPassword,
+        public string $loginUrl,
+        public string $logoUrl
     ) {
         $this->afterCommit();
     }

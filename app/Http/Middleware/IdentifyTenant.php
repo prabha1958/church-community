@@ -94,6 +94,8 @@ class IdentifyTenant
         }
         $request->attributes->set('church', $church);
 
+
+
         /*
         |--------------------------------------------------------------------------
         | Connect to tenant database
@@ -105,7 +107,18 @@ class IdentifyTenant
             $this->tenantConnectionService->connect(
                 $church
             );
+
+
+            logger()->info('TENANT CONNECTION CHECK', [
+                'tenant_configured' => config('database.connections.tenant') !== null,
+                'tenant_database' => config('database.connections.tenant.database'),
+                'church_code' => request()->header('X-Church-Code'),
+            ]);
         } catch (\Throwable $e) {
+            logger()->error('TENANT CONNECTION FAILED', [
+                'church_code' => $church->church_code,
+                'error' => $e->getMessage(),
+            ]);
 
             return response()->json([
                 'message' => 'Unable to connect to church database.',

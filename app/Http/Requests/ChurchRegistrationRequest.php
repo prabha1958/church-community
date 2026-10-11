@@ -73,6 +73,23 @@ class ChurchRegistrationRequest extends FormRequest
                 'integer',
                 'between:1,12',
             ],
+
+            'admin_name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'admin_email' => [
+                'required',
+                'email',
+                'max:255',
+            ],
+
+            'registration_request_id' => [
+                'nullable',
+                'integer',
+            ],
         ];
     }
 }

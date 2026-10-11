@@ -14,15 +14,15 @@ return new class extends Migration
         DB::connection('platform')
             ->table('platform_users')
             ->update([
-                'role' => 'setup-admin',
+                'role' => 'setup_admin',
             ]);
 
         // Now change the enum.
         Schema::connection('platform')->table('platform_users', function (Blueprint $table) {
             $table->enum('role', [
                 'owner',
-                'setup-admin',
-            ])->default('setup-admin')->change();
+                'setup_admin',
+            ])->default('setup_admin')->change();
         });
     }
 
@@ -34,13 +34,13 @@ return new class extends Migration
             ->table('platform_users')
             ->where('role', 'owner')
             ->update([
-                'role' => 'setup-admin',
+                'role' => 'setup_admin',
             ]);
 
         Schema::connection('platform')->table('platform_users', function (Blueprint $table) {
             $table->enum('role', [
-                'setup-admin',
-            ])->default('setup-admin')->change();
+                'setup_admin',
+            ])->default('setup_admin')->change();
         });
     }
 };

@@ -343,4 +343,106 @@ class PlatformMemberController extends Controller
             ], 422);
         }
     }
+
+
+    public function updateRole(
+        Request $request,
+        int $member,
+        TenantConnectionService $tenantConnectionService
+    ): JsonResponse {
+        $user = $request->user();
+
+        if (
+            !$user instanceof PlatformUser ||
+            $user->status !== 'active' ||
+            $user->role !== 'setup_admin'
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only an active setup administrator can change member roles.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'role' => ['required', 'in:member,admin'],
+        ]);
+
+        $church = $user->church;
+
+        if (!$church || $church->status !== 'active') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your church is not active.',
+            ], 403);
+        }
+
+        try {
+            $tenantConnectionService->connect($church);
+
+            $churchMember = Member::query()
+                ->where('status_flag', true)
+                ->find($member);
+
+            if (!$churchMember) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Active church member not found.',
+                ], 404);
+            }
+
+            $newRole = $validated['role'];
+            $oldRole = $churchMember->role;
+
+            if (!in_array($oldRole, ['member', 'admin'], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This member has an unsupported role.',
+                ], 422);
+            }
+
+            if ($oldRole === $newRole) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'The member already has this role.',
+                    'data' => [
+                        'member_id' => $churchMember->id,
+                        'role' => $churchMember->role,
+                    ],
+                ]);
+            }
+
+            $churchMember->role = $newRole;
+            $churchMember->save();
+
+            AdminActionLogger::log(
+                action: 'member.role.update',
+                description: "Changed member #{$churchMember->id} role from {$oldRole} to {$newRole}",
+                modelType: Member::class,
+                modelId: $churchMember->id
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => $newRole === 'admin'
+                    ? 'Member promoted to administrator successfully.'
+                    : 'Administrator changed to member successfully.',
+                'data' => [
+                    'member_id' => $churchMember->id,
+                    'role' => $churchMember->role,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Platform member role update failed.', [
+                'platform_user_id' => $user->id,
+                'church_id' => $church->id,
+                'member_id' => $member,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to update the member role.',
+            ], 500);
+        }
+    }
 }

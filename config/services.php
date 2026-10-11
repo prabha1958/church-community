@@ -37,13 +37,17 @@ return [
 
     'platform' => [
         'frontend_url' => env(
-            'PLATFORM_FRONTEND_URL',
+            'FRONTEND_URL',
             'http://localhost:3000'
         ),
         'owner_email' => env(
             'PLATFORM_OWNER_MAIL',
             'platform@localhost'
-        )
+        ),
+        'backend_url' => env(
+            'PLATFORM_BACKEND_URL',
+            'http://localhost:8000'
+        ),
     ],
 
     'razorpay' => [
