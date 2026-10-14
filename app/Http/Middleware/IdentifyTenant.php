@@ -25,6 +25,7 @@ class IdentifyTenant
 
 
 
+
         /*
     |--------------------------------------------------------------------------
     | Platform-level routes that do not belong to a tenant
@@ -107,18 +108,8 @@ class IdentifyTenant
             $this->tenantConnectionService->connect(
                 $church
             );
-
-
-            logger()->info('TENANT CONNECTION CHECK', [
-                'tenant_configured' => config('database.connections.tenant') !== null,
-                'tenant_database' => config('database.connections.tenant.database'),
-                'church_code' => request()->header('X-Church-Code'),
-            ]);
         } catch (\Throwable $e) {
-            logger()->error('TENANT CONNECTION FAILED', [
-                'church_code' => $church->church_code,
-                'error' => $e->getMessage(),
-            ]);
+
 
             return response()->json([
                 'message' => 'Unable to connect to church database.',
@@ -142,6 +133,15 @@ class IdentifyTenant
         | Continue request
         |--------------------------------------------------------------------------
         */
+
+        try {
+            $member = \App\Models\Member::find(50001);
+        } catch (\Throwable $e) {
+
+            throw $e;
+        }
+
+
 
         return $next($request);
     }

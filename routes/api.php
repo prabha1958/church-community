@@ -46,6 +46,7 @@ use App\Http\Controllers\ChurchInfoController;
 use App\Http\Controllers\Api\ChurchLicenseController;
 use App\Http\Controllers\Platform\LicenseController;
 use App\Http\Controllers\Platform\ChurchRegistrationRequestController;
+use App\Http\Controllers\Admin\OutstandingSubscriptionController;
 
 
 // ============================================================
@@ -801,6 +802,28 @@ Route::patch(
     ]
 )->middleware('platform.auth')
     ->whereNumber('member');
+
+
+
+
+Route::prefix('admin')
+    ->middleware(['tenant', 'auth:sanctum', 'license', 'admin'])
+    ->group(function () {
+        Route::get(
+            '/outstanding-subscriptions',
+            [OutstandingSubscriptionController::class, 'index']
+        );
+
+        Route::get(
+            '/outstanding-subscriptions/{outstandingSubscription}',
+            [OutstandingSubscriptionController::class, 'show']
+        );
+
+        Route::post(
+            '/outstanding-subscriptions/{outstandingSubscription}/payments',
+            [OutstandingSubscriptionController::class, 'collectPayment']
+        );
+    });
 
 // ============================================================
 // HEALTH CHECK

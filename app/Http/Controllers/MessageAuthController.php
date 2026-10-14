@@ -13,33 +13,33 @@ use Illuminate\Support\Facades\Mail;
 class MessageAuthController extends Controller
 {
 
+
+
     public function login(Request $request)
     {
         $data = $request->validate([
             'member_id' => ['required', 'integer', 'min:1'],
+
         ]);
 
-        $member = Member::find($data['member_id']);
+        $member = Member::where('id', $data['member_id'])->first();
+
+
 
         if (!$member) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid Member ID. Please check and try again.',
+                'message' => 'Invalid Member ID or Mobile Number.',
             ], 401);
         }
 
-        $email = trim((string) $member->email);
-
-        if ($email === '') {
+        if (empty($member->email)) {
             return response()->json([
                 'success' => false,
-                'code' => 'EMAIL_MISSING',
-                'message' => 'No email address is registered for your Member ID. Please contact your church administrator to update your email address before signing in.',
+                'message' => 'No email address is registered for this member. Please contact the church administrator.',
             ], 422);
         }
 
-        // Include the tenant database in the key so OTPs cannot
-        // be shared between different churches.
         $tenantDatabase = $member->getConnection()->getDatabaseName();
 
         $key = 'member-email-otp:' . hash(
@@ -47,57 +47,61 @@ class MessageAuthController extends Controller
             $tenantDatabase . '|' . $member->id
         );
 
-        $resendKey = $key . ':resend';
-
-        if (Cache::has($resendKey)) {
+        // Enforce a 60-second resend cooldown.
+        if (Cache::has($key . ':resend')) {
             return response()->json([
                 'success' => false,
-                'message' => 'An OTP was recently requested. Please wait 60 seconds before requesting another.',
+                'message' => 'Please wait before requesting another OTP.',
             ], 429);
         }
 
         $otp = (string) random_int(100000, 999999);
 
+        // Store only the OTP hash, never the plain OTP.
         Cache::put($key, [
             'otp_hash' => hash('sha256', $otp),
             'attempts' => 0,
         ], now()->addMinutes(5));
 
-        Cache::put($resendKey, true, now()->addSeconds(60));
+        Cache::put(
+            $key . ':resend',
+            true,
+            now()->addSeconds(60)
+        );
 
         try {
             Mail::raw(
-                "Your Church Message App verification code is: {$otp}\n\n"
+                "Your Church Message App login OTP is: {$otp}\n\n"
                     . "This code expires in 5 minutes. Do not share it with anyone.",
-                function ($message) use ($email) {
-                    $message->to($email)
-                        ->subject('Church Message App - Login OTP');
+                function ($message) use ($member) {
+                    $message
+                        ->to($member->email)
+                        ->subject('Your Church Message App Login OTP');
                 }
             );
         } catch (\Throwable $e) {
             Cache::forget($key);
-            Cache::forget($resendKey);
+            Cache::forget($key . ':resend');
 
-            Log::error('Member login OTP email failed.', [
+            Log::error('EMAIL OTP SEND ERROR', [
                 'member_id' => $member->id,
-                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Unable to send the OTP email right now. Please try again later.',
+                'message' => 'Unable to send the OTP email. Please try again later.',
             ], 500);
         }
 
-        // Mask the email before returning it to the app.
-        $maskedEmail = $this->maskEmail($email);
-
         return response()->json([
             'success' => true,
-            'message' => "An OTP has been sent to {$maskedEmail}.",
-            'email_masked' => $maskedEmail,
+            'message' => 'OTP sent to your registered email address.',
+            'email' => $this->maskEmail($member->email),
         ]);
     }
+
+
 
     public function verifyOtp(Request $request)
     {

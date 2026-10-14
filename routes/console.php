@@ -27,3 +27,8 @@ Schedule::command('greetings:anniversary')
 
 Schedule::command('licenses:expire')
     ->dailyAt('00:10');
+
+Schedule::command('subscriptions:generate-outstanding')
+    ->yearlyOn(4, 1, '02:00')
+    ->timezone('Asia/Kolkata')
+    ->withoutOverlapping();

@@ -22,6 +22,18 @@ return Application::configure(basePath: dirname(__DIR__))
             'platform.tenant' => \App\Http\Middleware\PlatformTenant::class,
             'license' => \App\Http\Middleware\CheckLicense::class,
         ]);
+
+
+
+        $middleware->prependToPriorityList(
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\Authenticate::class
+        );
+
+        $middleware->prependToPriorityList(
+            \App\Http\Middleware\Authenticate::class,
+            \App\Http\Middleware\IdentifyTenant::class
+        );
     })
 
     ->withExceptions(function (Exceptions $exceptions): void {
