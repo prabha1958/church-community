@@ -137,6 +137,8 @@ class MessageController extends Controller
             'title'      => 'required|string|max:255',
             'body'       => 'required|string',
             'image_path' => 'nullable|image|max:2048',
+            'from'       => 'required|string|max:255',
+            'from_name'  => 'required|string|max:255',
         ]);
 
         if ($request->hasFile('image_path')) {
