@@ -235,7 +235,7 @@ class AlliancePaymentController extends Controller
                 'status' => 'paid',
                 'paid_at' => now(),
                 'raw' => [
-                    'payment_mode' => $data['payment_mode'],
+                    'payment_mode' => $data['paymentMode'],
                     'reference_no' => $data['reference_no'],
                 ],
             ]);
