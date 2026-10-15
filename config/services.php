@@ -38,7 +38,7 @@ return [
     'platform' => [
         'frontend_url' => env(
             'FRONTEND_URL',
-            'http://localhost:3000'
+            'https://wcr.csimarital.in'
         ),
         'owner_email' => env(
             'PLATFORM_OWNER_MAIL',
@@ -46,7 +46,7 @@ return [
         ),
         'backend_url' => env(
             'PLATFORM_BACKEND_URL',
-            'http://localhost:8000'
+            'https://csiadmin.csimarital;.in'
         ),
     ],
 

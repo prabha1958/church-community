@@ -124,7 +124,7 @@ class PlatformOnboardingController extends Controller
 
             try {
 
-                $loginUrl = config('services.platform.frontend_url') . '/platform/login';
+                $loginUrl = config('services.platform.frontend_url') . '/platform/dashboard';
                 $logoUrl = config('services.platform.frontend_url') . '/logo.png';
                 Mail::to($setupAdmin['user']->email)->queue(
                     new SetupAdminWelcomeMail(

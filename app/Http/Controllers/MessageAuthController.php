@@ -215,6 +215,55 @@ class MessageAuthController extends Controller
         ]);
     }
 
+
+    public function loginMobile(\Illuminate\Http\Request $request)
+    {
+        $validated = $request->validate([
+            'member_id' => ['required', 'integer', 'min:1'],
+            'mobile_number' => ['required', 'string', 'regex:/^[0-9]{10}$/'],
+        ]);
+
+        // Ensure tenant identification has configured the connection.
+        if (!\Illuminate\Support\Facades\Config::get('database.connections.tenant')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tenant database connection is not configured.',
+            ], 500);
+        }
+
+        // Find the member in the selected church's tenant database.
+        $member = \App\Models\Member::on('tenant')
+            ->where('id', $validated['member_id'])
+            ->where('mobile_number', $validated['mobile_number'])
+            ->first();
+
+        if (!$member) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Member ID or mobile number.',
+            ], 401);
+        }
+
+        // Do not allow inactive members to log in.
+        if (isset($member->status_flag) && (int) $member->status_flag !== 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your membership is inactive. Please contact the church administrator.',
+            ], 403);
+        }
+
+        // Create the Sanctum access token.
+        $token = $member->createToken('churchmsgapp')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful.',
+            'token' => $token,
+            'member' => $member,
+        ], 200);
+    }
+
+
     public function show(Message $message, Request $request)
     {
         $member = $request->user();

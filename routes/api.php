@@ -82,6 +82,11 @@ Route::middleware('tenant')->group(function () {
         'verifyOtp',
     ]);
 
+    Route::post('/member/login-mobile', [
+        MessageAuthController::class,
+        'loginMobile',
+    ]);
+
 
     Route::get('/church', [
         ChurchInfoController::class,
