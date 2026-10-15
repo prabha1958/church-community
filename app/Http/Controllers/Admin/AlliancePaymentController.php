@@ -204,7 +204,7 @@ class AlliancePaymentController extends Controller
 
         $data = $request->validate([
             'amount'       => 'required|numeric|min:' . $this->minimumRupees,
-            'payment_mode' => 'required|in:cash,upi',
+            'paymentMode' => 'required|in:cash,upi',
             'reference_no' => 'required|string|max:255',
         ]);
 
