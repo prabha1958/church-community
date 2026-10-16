@@ -70,6 +70,12 @@ class MessageAuthController extends Controller
         );
 
         try {
+
+            Log::info('Member email OTP: attempting send', [
+                'member_id' => $member->id,
+                'tenant_database' => $tenantDatabase,
+                'email_present' => !empty($member->email),
+            ]);
             Mail::raw(
                 "Your Church Message App login OTP is: {$otp}\n\n"
                     . "This code expires in 5 minutes. Do not share it with anyone.",
