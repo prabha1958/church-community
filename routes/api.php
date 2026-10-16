@@ -743,7 +743,7 @@ Route::middleware('platform.auth')->group(function () {
     );
 
     Route::post(
-        'register',
+        'platform/register',
         [PlatformOnboardingController::class, 'register']
     )->name('platform.onboarding.register');
     Route::post(
